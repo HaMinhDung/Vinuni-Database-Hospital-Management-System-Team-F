@@ -44,7 +44,8 @@ This project involves the design, development, and implementation of a comprehen
 
 ## 1.6. Team Members and Roles
 
-* **Ha Minh Dung:** Backend Developer, Database Developer
+* **Ha Minh Dung:** Backend Developer
+* **Nguyen Duc Trung:** Database Developer
 * **Tran Hung Dat:** Frontend Developer
 
 
