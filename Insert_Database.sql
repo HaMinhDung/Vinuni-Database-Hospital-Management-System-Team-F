@@ -50,33 +50,33 @@ VALUES
 INSERT INTO `User` (Username, PasswordHash, Role)
 VALUES
   -- admin
-  ('admin',           'bcrypt_hash_for_admin',   'Admin'),
+  ('admin',           'admin',   'Admin'),
   -- doctors (UserID 2–10)
-  ('john_smith',      'bcrypt_hash_john',        'Doctor'),
-  ('jane_doe',        'bcrypt_hash_jane',        'Doctor'),
-  ('alan_turing',     'bcrypt_hash_alan',        'Doctor'),
-  ('clara_oswald',    'bcrypt_hash_clara',       'Doctor'),
-  ('greg_house',      'bcrypt_hash_greg',        'Doctor'),
-  ('meredith_grey',   'bcrypt_hash_meredith',    'Doctor'),
-  ('leonard_mccoy',   'bcrypt_hash_leonard',     'Doctor'),
-  ('dana_scully',     'bcrypt_hash_dana',        'Doctor'),
-  ('stephen_strange','bcrypt_hash_stephen',     'Doctor'),
+  ('john_smith',      'john',        'Doctor'),
+  ('jane_doe',        'jane',        'Doctor'),
+  ('alan_turing',     'alan',        'Doctor'),
+  ('clara_oswald',    'clara',       'Doctor'),
+  ('greg_house',      'greg',        'Doctor'),
+  ('meredith_grey',   'meredith',    'Doctor'),
+  ('leonard_mccoy',   'leonard',     'Doctor'),
+  ('dana_scully',     'dana',        'Doctor'),
+  ('stephen_strange','stephen',     'Doctor'),
   -- patients (UserID 11–25)
-  ('alice_brown',     'bcrypt_hash_alice',       'Patient'),
-  ('bob_green',       'bcrypt_hash_bob',         'Patient'),
-  ('charlie_black',   'bcrypt_hash_charlie',     'Patient'),
-  ('diana_white',     'bcrypt_hash_diana',       'Patient'),
-  ('eve_adams',       'bcrypt_hash_eve',         'Patient'),
-  ('frank_wright',    'bcrypt_hash_frank',       'Patient'),
-  ('grace_hopper',    'bcrypt_hash_grace',       'Patient'),
-  ('heidi_klum',      'bcrypt_hash_heidi',       'Patient'),
-  ('ivan_petrov',     'bcrypt_hash_ivan',        'Patient'),
-  ('judy_garland',    'bcrypt_hash_judy',        'Patient'),
-  ('karl_marx',       'bcrypt_hash_karl',        'Patient'),
-  ('lara_croft',      'bcrypt_hash_lara',        'Patient'),
-  ('mike_tyson',      'bcrypt_hash_mike',        'Patient'),
-  ('nina_simone',     'bcrypt_hash_nina',        'Patient'),
-  ('oliver_twist',    'bcrypt_hash_oliver',      'Patient');
+  ('alice_brown',     'alice',       'Patient'),
+  ('bob_green',       'bob',         'Patient'),
+  ('charlie_black',   'charlie',     'Patient'),
+  ('diana_white',     'diana',       'Patient'),
+  ('eve_adams',       'eve',         'Patient'),
+  ('frank_wright',    'frank',       'Patient'),
+  ('grace_hopper',    'grace',       'Patient'),
+  ('heidi_klum',      'heidi',       'Patient'),
+  ('ivan_petrov',     'ivan',        'Patient'),
+  ('judy_garland',    'judy',        'Patient'),
+  ('karl_marx',       'karl',        'Patient'),
+  ('lara_croft',      'lara',        'Patient'),
+  ('mike_tyson',      'mike',        'Patient'),
+  ('nina_simone',     'nina',        'Patient'),
+  ('oliver_twist',    'oliver',      'Patient');
 
 -- 2.6 Link Users ↔ Doctors/Patients
 INSERT INTO UserProfile (UserID, DoctorID)
