@@ -38,9 +38,74 @@ def manage_doctor():
         choice = input("Select function: ")
         if choice == '1':
             name = input("Doctor's name: ")
-            spec = input("Specialization: ")
-            dept_id = int(input("Department ID: "))
-            doctor.create_doctor(name, spec, dept_id)
+            
+            print("\nAvailable Departments:")
+            departments = department.read_departments()
+            if departments:
+                for d in departments:
+                    print(f"ID: {d['DepartmentID']}, Name: {d['Name']}")
+            else:
+                print("No departments found. Please create one first.")
+                continue # Go back to doctor menu if no departments
+
+            while True:
+                dept_choice = input("Enter Department ID for the doctor, or type 'new' to create a new department: ").strip().lower()
+                
+                if dept_choice == 'new':
+                    new_dept_name = input("Enter the name for the new department: ")
+                    if new_dept_name:
+                        department.create_department(new_dept_name)
+                        # Fetch departments again to get the new ID
+                        departments = department.read_departments()
+                        # Find the ID of the newly created department
+                        new_dept = next((d for d in departments if d['Name'] == new_dept_name), None)
+                        if new_dept:
+                            dept_id = new_dept['DepartmentID']
+                            print(f"Created new department '{new_dept_name}' with ID {dept_id}.")
+                            break
+                        else:
+                            print("Failed to retrieve new department ID. Please try again.")
+                            continue # Ask for department choice again
+                    else:
+                        print("Department name cannot be empty.")
+                        continue # Ask for department choice again
+                else:
+                    try:
+                        selected_dept_id = int(dept_choice)
+                        # Validate if the entered ID exists
+                        if any(d['DepartmentID'] == selected_dept_id for d in departments):
+                            dept_id = selected_dept_id
+                            break
+                        else:
+                            print("Invalid Department ID.")
+                    except ValueError:
+                        print("Invalid input. Please enter a number or 'new'.")
+                
+            # Specialization is now determined by the department
+            spec = next((d['Name'] for d in departments if d['DepartmentID'] == dept_id), "Unknown Specialization") # Get department name as specialization
+
+            # Generate username and password based on doctor's name
+            base_username = name.replace(' ', '_').lower()
+            username = base_username
+            i = 1
+            while is_username_taken(username):
+                username = f"{base_username}_{i}"
+                i += 1
+                
+            password = name.replace(' ', '').lower() # Simple default password (insecure)
+
+            # Create user account
+            user_id = user.create_user(username, password, "Doctor")
+            
+            if user_id is not None:
+                # Create doctor record
+                doctor_id = doctor.create_doctor(name, spec, dept_id)
+                # Link user and doctor in UserProfile
+                user_profile.create_user_profile(user_id, doctor_id, None)
+                print(f"User account created for {name} with username '{username}' and password '{password}'.")
+                print(f"Doctor {name} added and linked to user account.")
+            else:
+                print(f"Failed to create user account for {name}. Doctor not added.")
         elif choice == '2':
             doctors = doctor.read_doctors()
             if doctors:
@@ -50,10 +115,26 @@ def manage_doctor():
                 print("No doctors found.")
         elif choice == '3':
             doctor_id = int(input("ID of doctor to update: "))
-            new_name = input("New name: ")
-            new_spec = input("New specialization: ")
-            new_dept_id = int(input("New department ID: "))
+            # Fetch current doctor info to display as default
+            current_doctor = doctor.get_doctor(doctor_id)
+            if not current_doctor:
+                print("Doctor not found.")
+                continue
+            print(f"Current Info: {current_doctor}")
+            print("Leave blank to keep current value.")
+            
+            new_name_input = input(f"New name (current: {current_doctor['Name']}): ")
+            new_name = new_name_input if new_name_input.strip() != "" else current_doctor['Name']
+            
+            new_spec_input = input(f"New specialization (current: {current_doctor['Specialization']}): ")
+            new_spec = new_spec_input if new_spec_input.strip() != "" else current_doctor['Specialization']
+            
+            # Handle Department ID as integer, allow blank for no change
+            new_dept_id_input = input(f"New department ID (current: {current_doctor['DepartmentID']}): ")
+            new_dept_id = int(new_dept_id_input) if new_dept_id_input.strip() != "" else current_doctor['DepartmentID']
+            
             doctor.update_doctor(doctor_id, new_name, new_spec, new_dept_id)
+            print("Doctor information updated.")
         elif choice == '4':
             doctor_id = int(input("ID of doctor to delete: "))
             doctor.delete_doctor(doctor_id)
@@ -76,7 +157,32 @@ def manage_patient():
             dob = input("Date of birth (YYYY-MM-DD): ")
             gender = input("Gender: ")
             contact = input("Contact: ")
-            patient.create_patient(name, dob, gender, contact)
+            
+            # Generate username and password based on patient's name
+            base_username = name.replace(' ', '_').lower()
+            username = base_username
+            i = 1
+            while is_username_taken(username):
+                username = f"{base_username}_{i}"
+                i += 1
+                
+            password = name.replace(' ', '').lower() # Simple default password (insecure)
+
+            # Create user account
+            user_id = user.create_user(username, password, "Patient")
+
+            if user_id is not None:
+                # Create patient record
+                patient_id = patient.create_patient(name, dob, gender, contact)
+                # Link user and patient in UserProfile
+                if patient_id is not None:
+                    user_profile.create_user_profile(user_id, None, patient_id)
+                    print(f"User account created for {name} with username '{username}' and password '{password}'.")
+                    print(f"Patient {name} added and linked to user account.")
+                else:
+                    print(f"Failed to create patient record for {name}. User account created but not linked.")
+            else:
+                print(f"Failed to create user account for {name}. Patient not added.")
         elif choice == '2':
             patients = patient.read_patients()
             if patients:
@@ -86,11 +192,28 @@ def manage_patient():
                 print("No patients found.")
         elif choice == '3':
             patient_id = int(input("ID of patient to update: "))
-            new_name = input("New name: ")
-            new_dob = input("New date of birth (YYYY-MM-DD): ")
-            new_gender = input("New gender: ")
-            new_contact = input("New contact: ")
+            # Fetch current patient info to display as default
+            current_patient = patient.get_patient(patient_id)
+            if not current_patient:
+                print("Patient not found.")
+                continue
+            print(f"Current Info: {current_patient}")
+            print("Leave blank to keep current value.")
+
+            new_name_input = input(f"New name (current: {current_patient['Name']}): ")
+            new_name = new_name_input if new_name_input.strip() != "" else current_patient['Name']
+
+            new_dob_input = input(f"New date of birth (YYYY-MM-DD) (current: {current_patient['DOB']}): ")
+            new_dob = new_dob_input if new_dob_input.strip() != "" else current_patient['DOB']
+
+            new_gender_input = input(f"New gender (current: {current_patient['Gender']}): ")
+            new_gender = new_gender_input if new_gender_input.strip() != "" else current_patient['Gender']
+
+            new_contact_input = input(f"New contact (current: {current_patient['Contact']}): ")
+            new_contact = new_contact_input if new_contact_input.strip() != "" else current_patient['Contact']
+
             patient.update_patient(patient_id, new_name, new_dob, new_gender, new_contact)
+            print("Patient information updated.")
         elif choice == '4':
             patient_id = int(input("ID of patient to delete: "))
             patient.delete_patient(patient_id)

@@ -6,9 +6,11 @@ def create_patient(name, dob, gender, contact):
     sql = "INSERT INTO Patient (Name, DOB, Gender, Contact) VALUES (%s, %s, %s, %s)"
     cursor.execute(sql, (name, dob, gender, contact))
     conn.commit()
+    patient_id = cursor.lastrowid
     print("Patient added.")
     cursor.close()
     conn.close()
+    return patient_id
 
 def read_patients():
     conn = get_connection()

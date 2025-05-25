@@ -8,14 +8,17 @@ def create_user(username, password_hash, role):
     cursor.execute(sql_check, (username,))
     (count,) = cursor.fetchone()
     if count > 0:
-        print("Username đã được sử dụng. Vui lòng chọn tên khác.")
+        print("Username is already in use. Please choose another username.")
+        user_id = None # Indicate failure to create user
     else:
         sql = "INSERT INTO User (Username, PasswordHash, Role) VALUES (%s, %s, %s)"
         cursor.execute(sql, (username, password_hash, role))
         conn.commit()
+        user_id = cursor.lastrowid
         print("User created.")
     cursor.close()
     conn.close()
+    return user_id
 
 def read_users():
     conn = get_connection()

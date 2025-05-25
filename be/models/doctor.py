@@ -27,7 +27,7 @@ def update_doctor(doctor_id, name, specialization, department_id):
     sql = "UPDATE Doctor SET Name = %s, Specialization = %s, DepartmentID = %s WHERE DoctorID = %s"
     cursor.execute(sql, (name, specialization, department_id, doctor_id))
     conn.commit()
-    print("✅ Đã cập nhật bác sĩ.")
+    print("✅ Doctor infomation updated.")
     cursor.close()
     conn.close()
 
@@ -36,7 +36,7 @@ def delete_doctor(doctor_id):
     cursor = conn.cursor()
     cursor.execute("DELETE FROM Doctor WHERE DoctorID = %s", (doctor_id,))
     conn.commit()
-    print("🗑️ Đã xóa.")
+    print("🗑️ Deleted.")
     cursor.close()
     conn.close()
     
