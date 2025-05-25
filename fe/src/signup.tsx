@@ -31,7 +31,7 @@ const Signup: React.FC = () => {
 
     return (
         <div style={{ padding: '20px' }}>
-            <h2>Đăng ký tài khoản bệnh nhân</h2>
+            <h2>Sign up for patient account</h2>
             {message && <p style={{ color: 'red' }}>{message}</p>}
             <form onSubmit={handleSignup}>
                 <div>
@@ -53,7 +53,7 @@ const Signup: React.FC = () => {
                     />
                 </div>
                 <div>
-                    <label>Họ và tên: </label>
+                    <label>Full name: </label>
                     <input 
                         type="text" 
                         value={name} 
@@ -62,7 +62,7 @@ const Signup: React.FC = () => {
                     />
                 </div>
                 <div>
-                    <label>Ngày sinh (YYYY-MM-DD): </label>
+                    <label>Date of birth (YYYY-MM-DD): </label>
                     <input 
                         type="date" 
                         value={dob} 
@@ -71,7 +71,7 @@ const Signup: React.FC = () => {
                     />
                 </div>
                 <div>
-                    <label>Giới tính: </label>
+                    <label>Gender: </label>
                     <input 
                         type="text" 
                         value={gender} 
@@ -80,7 +80,7 @@ const Signup: React.FC = () => {
                     />
                 </div>
                 <div>
-                    <label>Liên hệ: </label>
+                    <label>Contact: </label>
                     <input 
                         type="text" 
                         value={contact} 
@@ -88,10 +88,10 @@ const Signup: React.FC = () => {
                         required 
                     />
                 </div>
-                <button type="submit">Đăng ký</button>
+                <button type="submit">Sign Up</button>
             </form>
             <p>
-                <a href="/">Quay lại đăng nhập</a>
+                <a href="/">Back to login</a>
             </p>
         </div>
     );
