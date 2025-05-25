@@ -1,9 +1,9 @@
 from db.connection import get_connection
-from models import user, patient, appointment, medical_record, user_profile, doctor  # Thêm import doctor
+from models import user, patient, appointment, medical_record, user_profile, doctor  
 
 def check_user_credentials(username, password):
     """
-    Kiểm tra đăng nhập bằng cách truy vấn bảng User với username và password_hash.
+    Check login by querying the User table with username and password_hash.
     """
     conn = get_connection()
     cursor = conn.cursor(dictionary=True)
@@ -16,151 +16,151 @@ def check_user_credentials(username, password):
 
 def patient_menu(user_info):
     """
-    Menu của bệnh nhân sau khi đăng nhập thành công.
-    Dựa vào UserID, sử dụng hàm get_doctor_patient_ids để lấy list [DoctorID, PatientID].
-    Nếu patient_id khác None thì hiện thị menu với các chức năng:
-    - Chỉnh sửa hồ sơ bệnh nhân (dùng các hàm có trong patient.py)
-    - Hiển thị danh sách appointment của bệnh nhân (dùng get_appointments_by_patient)
-    - Hiển thị hồ sơ y tế (dùng get_appointment_ids_by_patient và get_medical_records_by_appointment_ids)
-    - Xem hồ sơ bệnh nhân (chỉ hiển thị thông tin)
-    - Xem danh sách thông tin các bác sĩ đã hẹn hoặc từng khám cho bạn
+    Patient menu after successful login.
+    Based on UserID, use the get_doctor_patient_ids function to get a list [DoctorID, PatientID].
+    If patient_id is not None, display the menu with the following functions:
+    - Edit patient profile (use functions in patient.py)
+    - Display patient's appointment list (use get_appointments_by_patient)
+    - Display medical records (use get_appointment_ids_by_patient and get_medical_records_by_appointment_ids)
+    - View patient profile (only display information)
+    - View list of doctors you have appointments with or have been examined by
     """
     ids = user_profile.get_doctor_patient_ids(user_info["UserID"])
     doctor_id, patient_id = ids[0], ids[1]
     if patient_id is None:
-        print("Tài khoản không phải bệnh nhân.")
+        print("Account is not a patient account.")
         return
 
     while True:
-        print("\n--- MENU BỆNH NHÂN ---")
-        print("1. Chỉnh sửa hồ sơ bệnh nhân")
-        print("2. Hiển thị danh sách appointment")
-        print("3. Hiển thị hồ sơ y tế")
-        print("4. Xem hồ sơ bệnh nhân")
-        print("5. Xem danh sách các bác sĩ đã hẹn hoặc từng khám cho bạn")
-        print("0. Đăng xuất")
-        choice = input("Chọn chức năng: ")
+        print("\n--- PATIENT MENU ---")
+        print("1. Edit patient profile")
+        print("2. Display appointment list")
+        print("3. Display medical records")
+        print("4. View patient profile")
+        print("5. View list of doctors you have appointments with or have been examined by")
+        print("0. Log out")
+        choice = input("Select function: ")
         if choice == "1":
-            # Lấy thông tin hiện tại của bệnh nhân để chỉnh sửa
+            # Get current patient information to edit
             info = patient.get_patient(patient_id)
             if not info:
-                print("Không tìm thấy thông tin bệnh nhân.")
+                print("Patient information not found.")
             else:
-                print("Thông tin hiện tại:")
+                print("Current information:")
                 print(info)
-                new_name = input(f"Nhập tên mới (Enter để giữ nguyên [{info.get('Name')}]): ").strip() or info.get('Name')
-                new_dob = input(f"Nhập ngày sinh mới (YYYY-MM-DD) (Enter để giữ nguyên [{info.get('DOB')}]): ").strip() or info.get('DOB')
-                new_gender = input(f"Nhập giới tính mới (Enter để giữ nguyên [{info.get('Gender')}]): ").strip() or info.get('Gender')
-                new_contact = input(f"Nhập liên hệ mới (Enter để giữ nguyên [{info.get('Contact')}]): ").strip() or info.get('Contact')
+                new_name = input(f"Enter new name (Press Enter to keep [{info.get('Name')}]): ").strip() or info.get('Name')
+                new_dob = input(f"Enter new date of birth (YYYY-MM-DD) (Press Enter to keep [{info.get('DOB')}]): ").strip() or info.get('DOB')
+                new_gender = input(f"Enter new gender (Press Enter to keep [{info.get('Gender')}]): ").strip() or info.get('Gender')
+                new_contact = input(f"Enter new contact (Press Enter to keep [{info.get('Contact')}]): ").strip() or info.get('Contact')
                 patient.update_patient(patient_id, new_name, new_dob, new_gender, new_contact)
         elif choice == "2":
             appointments = appointment.get_appointments_by_patient(patient_id)
             if not appointments:
-                print("Bạn không có cuộc hẹn nào.")
+                print("You have no appointments.")
             else:
-                print("Danh sách cuộc hẹn của bạn:")
+                print("Your appointment list:")
                 for apt in appointments:
                     print(apt)
         elif choice == "3":
             apt_ids = appointment.get_appointment_ids_by_patient(patient_id)
             records = medical_record.get_medical_records_by_appointment_ids(apt_ids)
             if not records:
-                print("Không có hồ sơ y tế nào.")
+                print("No medical records found.")
             else:
-                print("Hồ sơ y tế của bạn:")
+                print("Your medical records:")
                 for record in records:
-                    # Hiển thị kết hợp thông tin medical record, DateTime và DoctorName
+                    # Display combined medical record, DateTime and DoctorName information
                     print(record)
         elif choice == "4":
-            # Chức năng xem hồ sơ bệnh nhân (chỉ hiển thị thông tin)
+            # Function to view patient profile (only display information)
             info = patient.get_patient(patient_id)
             if not info:
-                print("Không tìm thấy hồ sơ bệnh nhân.")
+                print("Patient profile not found.")
             else:
-                print("Hồ sơ bệnh nhân của bạn:")
+                print("Your patient profile:")
                 print(info)
         elif choice == "5":
-            # Sử dụng hàm get_doctor_ids_by_patient và get_doctors_by_ids để lấy thông tin các bác sĩ đã hẹn
+            # Use get_doctor_ids_by_patient and get_doctors_by_ids functions to get information of doctors with appointments
             doc_ids = appointment.get_doctor_ids_by_patient(patient_id)
             if not doc_ids:
-                print("Không có bác sĩ nào hẹn hoặc từng khám cho bạn.")
+                print("No doctors you have appointments with or have been examined by.")
             else:
                 doctors_info = doctor.get_doctors_by_ids(doc_ids)
                 if not doctors_info:
-                    print("Không thể lấy được thông tin các bác sĩ.")
+                    print("Could not retrieve doctor information.")
                 else:
-                    print("Danh sách các bác sĩ đã hẹn hoặc từng khám cho bạn:")
+                    print("List of doctors you have appointments with or have been examined by:")
                     for d in doctors_info:
                         print(d)
         elif choice == "0":
-            print("Đăng xuất.")
+            print("Logging out.")
             break
         else:
-            print("Lựa chọn không hợp lệ.")
+            print("Invalid choice.")
 
 def doctor_menu(user_info):
     """
-    Menu của bác sĩ sau khi đăng nhập thành công.
-    Các chức năng:
-    1. Hiển thị hồ sơ bác sĩ (dựa vào DoctorID)
-    2. Chỉnh sửa hồ sơ bác sĩ (dựa vào DoctorID)
-    3. Hiển thị danh sách Appointments với bệnh nhân (dùng get_appointments_by_doctor)
-    4. Hiển thị hồ sơ y tế bạn đã cung cấp (dùng get_appointment_ids_by_doctor và get_medical_records_with_appointment_info)
-    5. Xem danh sách bệnh nhân của bạn (dùng get_patient_ids_by_doctor và get_patients_by_ids)
-    6. Đặt lịch hẹn với bệnh nhân (sử dụng doctor_id của bạn)
-    7. Chỉnh sửa lại lịch hẹn với bệnh nhân
-    0. Đăng xuất
+    Doctor menu after successful login.
+    Functions:
+    1. Display doctor profile (based on DoctorID)
+    2. Edit doctor profile (based on DoctorID)
+    3. Display list of Appointments with patients (use get_appointments_by_doctor)
+    4. Display medical records you have provided (use get_appointment_ids_by_doctor and get_medical_records_with_appointment_info)
+    5. View list of your patients (use get_patient_ids_by_doctor and get_patients_by_ids)
+    6. Schedule appointment with patient (use your doctor_id)
+    7. Edit appointment with patient
+    0. Log out
     """
     # Lấy thông tin DoctorID từ profile (nếu có) hoặc yêu cầu nhập thủ công.
     ids = user_profile.get_doctor_patient_ids(user_info["UserID"])
     doctor_id, _ = ids[0], ids[1]
     if doctor_id is None:
         try:
-            doctor_id = int(input("Nhập ID bác sĩ của bạn: "))
+            doctor_id = int(input("Enter your doctor ID: "))
         except ValueError:
-            print("ID không hợp lệ.")
+            print("Invalid ID.")
             return
 
     while True:
-        print("\n--- MENU BÁC SĨ ---")
-        print("1. Hiển thị hồ sơ bác sĩ")
-        print("2. Chỉnh sửa hồ sơ bác sĩ")
-        print("3. Hiển thị danh sách Appointment với bệnh nhân")
-        print("4. Hiển thị hồ sơ y tế bạn đã cung cấp")
-        print("5. Xem danh sách bệnh nhân của bạn")
-        print("6. Đặt lịch hẹn với bệnh nhân")
-        print("7. Chỉnh sửa lịch hẹn với bệnh nhân")
-        print("8. Tạo hồ sơ y tế cho cuộc hẹn")
-        print("0. Đăng xuất")
-        choice = input("Chọn chức năng: ")
+        print("\n--- DOCTOR MENU ---")
+        print("1. Display doctor profile")
+        print("2. Edit doctor profile")
+        print("3. Display list of Appointments with patients")
+        print("4. Display medical records you have provided")
+        print("5. View list of your patients")
+        print("6. Schedule appointment with patient")
+        print("7. Edit appointment with patient")
+        print("8. Create medical record for appointment")
+        print("0. Log out")
+        choice = input("Select function: ")
         
         if choice == "1":
             info = doctor.get_doctor(doctor_id)
             if info:
-                print("Hồ sơ bác sĩ:")
+                print("Doctor profile:")
                 print(info)
             else:
-                print("Không tìm thấy hồ sơ bác sĩ.")
+                print("Doctor profile not found.")
                 
         elif choice == "2":
             info = doctor.get_doctor(doctor_id)
             if not info:
-                print("Không tìm thấy hồ sơ bác sĩ để cập nhật.")
+                print("Doctor profile not found for update.")
             else:
-                print("Thông tin hiện tại:")
+                print("Current information:")
                 print(info)
-                new_name = input(f"Nhập tên mới (Enter để giữ nguyên [{info.get('Name')}]): ").strip() or info.get('Name')
-                new_spec = input(f"Nhập chuyên khoa mới (Enter để giữ nguyên [{info.get('Specialization')}]): ").strip() or info.get('Specialization')
-                new_dept_input = input(f"Nhập ID khoa mới (Enter để giữ nguyên [{info.get('DepartmentID')}]): ").strip()
+                new_name = input(f"Enter new name (Press Enter to keep [{info.get('Name')}]): ").strip() or info.get('Name')
+                new_spec = input(f"Enter new specialization (Press Enter to keep [{info.get('Specialization')}]): ").strip() or info.get('Specialization')
+                new_dept_input = input(f"Enter new department ID (Current: [{info.get('DepartmentID')}]): ").strip()
                 new_dept = int(new_dept_input) if new_dept_input else info.get('DepartmentID')
                 doctor.update_doctor(doctor_id, new_name, new_spec, new_dept)
                 
         elif choice == "3":
             appointments = appointment.get_appointments_by_doctor(doctor_id)
             if not appointments:
-                print("Không có cuộc hẹn nào.")
+                print("No appointments found.")
             else:
-                print("Danh sách Appointment với bệnh nhân:")
+                print("List of Appointments with patients:")
                 for apt in appointments:
                     print(apt)
                     
@@ -168,97 +168,97 @@ def doctor_menu(user_info):
             apt_ids = appointment.get_appointment_ids_by_doctor(doctor_id)
             records = medical_record.get_medical_records_with_appointment_info(apt_ids)
             if not records:
-                print("Không có hồ sơ y tế nào được cung cấp.")
+                print("No medical records provided.")
             else:
-                print("Hồ sơ y tế của bạn:")
+                print("Your medical records:")
                 for rec in records:
                     print(rec)
                     
         elif choice == "5":
             patient_ids = appointment.get_patient_ids_by_doctor(doctor_id)
             if not patient_ids:
-                print("Không có bệnh nhân nào.")
+                print("No patients found.")
             else:
                 patients_info = patient.get_patients_by_ids(patient_ids)
                 if not patients_info:
-                    print("Không thể lấy thông tin bệnh nhân.")
+                    print("Could not retrieve patient information.")
                 else:
-                    print("Danh sách bệnh nhân của bạn:")
+                    print("List of your patients:")
                     for p in patients_info:
                         print(p)
                         
         elif choice == "6":
-            # Chức năng đặt lịch cho bệnh nhân
+            # Function to schedule appointment for patient
             try:
-                patient_id_input = input("Nhập ID bệnh nhân cần đặt lịch: ").strip()
+                patient_id_input = input("Enter patient ID to schedule appointment: ").strip()
                 patient_id_val = int(patient_id_input)
             except ValueError:
-                print("ID bệnh nhân không hợp lệ.")
+                print("Invalid patient ID.")
                 continue
-            dt = input("Nhập ngày giờ cuộc hẹn (YYYY-MM-DD HH:MM:SS): ").strip()
-            status = input("Nhập trạng thái cuộc hẹn (mặc định 'Scheduled'): ").strip() or "Scheduled"
+            dt = input("Enter appointment date and time (YYYY-MM-DD HH:MM:SS): ").strip()
+            status = input("Enter appointment status (default 'Scheduled'): ").strip() or "Scheduled"
             appointment.create_appointment(patient_id_val, doctor_id, dt, status)
             
         elif choice == "7":
-            # Chức năng chỉnh sửa lịch hẹn của bệnh nhân
+            # Function to edit patient's appointment
             try:
-                appointment_id = int(input("Nhập ID cuộc hẹn cần chỉnh sửa: ").strip())
+                appointment_id = int(input("Enter appointment ID to edit: ").strip())
             except ValueError:
-                print("ID cuộc hẹn không hợp lệ.")
+                print("Invalid appointment ID.")
                 continue
-            # Lấy thông tin cuộc hẹn hiện tại
+            # Get current appointment information
             apt = appointment.get_appointment(appointment_id)
             if not apt:
-                print("Không tìm thấy cuộc hẹn.")
+                print("Appointment not found.")
                 continue
-            print("Thông tin cuộc hẹn hiện tại:", apt)
-            new_patient_input = input(f"Nhập ID bệnh nhân mới (hiện tại: {apt['PatientID']}): ").strip()
+            print("Current appointment information:", apt)
+            new_patient_input = input(f"Enter new patient ID (current: {apt['PatientID']}): ").strip()
             new_patient = int(new_patient_input) if new_patient_input else apt['PatientID']
-            new_dt = input(f"Nhập ngày giờ mới (YYYY-MM-DD HH:MM:SS) (hiện tại: {apt['DateTime']}): ").strip() or apt['DateTime']
-            new_status = input(f"Nhập trạng thái mới (hiện tại: {apt['Status']}): ").strip() or apt['Status']
+            new_dt = input(f"Enter new date and time (YYYY-MM-DD HH:MM:SS) (current: {apt['DateTime']}): ").strip() or apt['DateTime']
+            new_status = input(f"Enter new status (current: {apt['Status']}): ").strip() or apt['Status']
             appointment.update_appointment(appointment_id, new_patient, doctor_id, new_dt, new_status)
             
         elif choice == "8":
-            # Chức năng tạo hồ sơ y tế cho cuộc hẹn của bác sĩ và cập nhật trạng thái cuộc hẹn thành 'Completed'
+            # Function to create medical record for appointment and update appointment status to 'Completed'
             try:
-                appointment_id = int(input("Nhập ID cuộc hẹn cần tạo hồ sơ y tế: ").strip())
+                appointment_id = int(input("Enter appointment ID to create medical record for: ").strip())
             except ValueError:
-                print("ID cuộc hẹn không hợp lệ.")
+                print("Invalid appointment ID.")
                 continue
                 
-            # Lấy thông tin cuộc hẹn
+            # Get appointment information
             apt = appointment.get_appointment(appointment_id)
             if not apt:
-                print("Không tìm thấy cuộc hẹn.")
+                print("Appointment not found.")
                 continue
-            # Kiểm tra cuộc hẹn có thuộc về bác sĩ đang đăng nhập không
+            # Check if the appointment belongs to the logged-in doctor
             if apt.get("DoctorID") != doctor_id:
-                print("Cuộc hẹn không thuộc về bạn.")
+                print("Appointment does not belong to you.")
                 continue
-            # Nhập thông tin hồ sơ y tế
-            diagnosis = input("Nhập chẩn đoán: ").strip()
-            treatment = input("Nhập phác đồ điều trị: ").strip()
-            notes = input("Nhập ghi chú: ").strip()
-            # Tạo hồ sơ y tế
+            # Enter medical record information
+            diagnosis = input("Enter diagnosis: ").strip()
+            treatment = input("Enter treatment plan: ").strip()
+            notes = input("Enter notes: ").strip()
+            # Create medical record
             medical_record.create_medical_record(appointment_id, diagnosis, treatment, notes)
-            # Cập nhật trạng thái cuộc hẹn thành 'Completed'
+            # Update appointment status to 'Completed'
             updated_status = "Completed"
             appointment.update_appointment(appointment_id, apt.get("PatientID"), doctor_id, apt.get("DateTime"), updated_status)
-            print("Hồ sơ y tế đã được tạo và trạng thái cuộc hẹn đã được cập nhật thành 'Completed'.")
+            print("Medical record created and appointment status updated to 'Completed'.")
             
         elif choice == "0":
-            print("Đăng xuất.")
+            print("Logging out.")
             break
         else:
-            print("Lựa chọn không hợp lệ.")
+            print("Invalid choice.")
 
 def main():
-    print("=== Hệ thống đăng nhập ===")
+    print("=== Login System ===")
     username = input("Username: ")
     password = input("Password: ")
     user_info = check_user_credentials(username, password)
     if not user_info:
-        print("Đăng nhập không thành công. Kiểm tra lại username hoặc password.")
+        print("Login failed. Check username or password.")
         return
 
     # Lấy thông tin profile để xác định vai trò
@@ -266,13 +266,13 @@ def main():
     doctor_id, patient_id = ids[0], ids[1]
     
     if doctor_id is not None:
-        print("Đăng nhập thành công với vai trò: Bác sĩ")
+        print("Login successful with role: Doctor")
         doctor_menu(user_info)
     elif patient_id is not None:
-        print("Đăng nhập thành công với vai trò: Bệnh nhân")
+        print("Login successful with role: Patient")
         patient_menu(user_info)
     else:
-        print("Không tìm thấy vai trò phù hợp cho user.")
+        print("No suitable role found for user.")
         
 if __name__ == "__main__":
     main()

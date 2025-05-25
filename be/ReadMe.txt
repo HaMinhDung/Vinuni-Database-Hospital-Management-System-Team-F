@@ -1,13 +1,20 @@
-Bước 0: cd be
-Bước 1: Tải Requirement (lỗi thì tải tiếp, thêm thư viện vào requirement)
-Bước 2: Chạy db vào MySql
-Bước 3: kết nối MySQL: ./db/Connection.py: điền mật khẩu, tài khoản vô
+Step 0: cd be
 
-Kết nối xong check bằng main.py: test các chức năng như admin
-login.py: đăng nhập (tài khoản mật khẩu check bảng User), đăng nhập bằng các role khác nhau (Doctor/Patient): test các chức năng của User
-p_sign_up: Test chức năng tạo user, hồ sơ bệnh nhân mới, không có bác sĩ vì bác sĩ sẽ do thằng admin thêm
+Step 1: Install requirements:
+pip install -r requirements.txt
+If you get an error about a missing library, install it (pip install ) and add it to requirements.txt.
 
-Bước 4: python server.py, kết nối với server frontend
+Step 2: Run the database script in MySQL.
 
-Note: trong frontend.tsx là check nếu là bác sĩ, bệnh nhân bằng cách check row trong bảng userProfile, nếu có thông tin bên cột nào thì là doctor/patient, nếu cả 2 là null là admin
+Step 3: Open ./db/Connection.py and enter your MySQL username and password.
+After connecting:
+-Run main.py to test admin functions
+-Run login.py to log in (checks credentials against the User table); try Doctor and Patient roles to test features
+-Run p_sign_up.py to test creating a new user and patient profile (doctors must be added by the admin)
 
+Step 4: python server.py  (start the backend and connect to the frontend)
+
+Note: In frontend.tsx, the app checks your row in userProfile:
+• If DoctorID is set, you’re a Doctor
+• If PatientID is set, you’re a Patient
+• If both are null, you’re the Admin

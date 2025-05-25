@@ -4,7 +4,7 @@ interface UserInfo {
     UserID: number;
     Username: string;
     Role: string;
-    // Các trường khác nếu cần
+    // Other fields if needed
 }
 
 const App: React.FC = () => {
@@ -24,7 +24,7 @@ const App: React.FC = () => {
         });
         const data = await response.json();
         if (response.ok) {
-            // Nếu cả DoctorID và PatientID đều null thì coi là admin
+            // If both DoctorID and PatientID are null, consider it admin
             if (data.doctor_id === null && data.patient_id === null) {
                 data.user_info.Role = "Admin";
             }
@@ -38,10 +38,10 @@ const App: React.FC = () => {
         }
     };
 
-    // -------------------- Các hàm cho Patient --------------------
+    // -------------------- Functions for Patient --------------------
     const patientUpdateProfile = async () => {
         if (!patientId) return;
-        const newName = prompt('Nhập tên mới:');
+        const newName = prompt('Enter new name:');
         if (!newName) return;
         const response = await fetch('http://localhost:5000/patient/update_profile', {
             method: 'PUT',
@@ -86,7 +86,7 @@ const App: React.FC = () => {
         alert(JSON.stringify(data.doctors || data.message, null, 2));
     };
 
-    // -------------------- Các hàm cho Doctor --------------------
+    // -------------------- Functions for Doctor --------------------
     const fetchDoctorProfile = async () => {
         if (!doctorId) return;
         const response = await fetch(`http://localhost:5000/doctor/profile?doctor_id=${doctorId}`);
@@ -99,13 +99,13 @@ const App: React.FC = () => {
         const responseProfile = await fetch(`http://localhost:5000/doctor/profile?doctor_id=${doctorId}`);
         const dataProfile = await responseProfile.json();
         if (!dataProfile.doctor_profile) {
-            alert("Không tìm thấy hồ sơ bác sĩ.");
+            alert("Doctor profile not found.");
             return;
         }
         const info = dataProfile.doctor_profile;
-        const newName = prompt(`Nhập tên mới (Enter để giữ nguyên [${info.Name}]): `, info.Name) || info.Name;
-        const newSpec = prompt(`Nhập chuyên khoa mới (Enter để giữ nguyên [${info.Specialization}]): `, info.Specialization) || info.Specialization;
-        const newDeptInput = prompt(`Nhập ID khoa mới (Enter để giữ nguyên [${info.DepartmentID}]): `, info.DepartmentID);
+        const newName = prompt(`Enter new name (Press Enter to keep [${info.Name}]): `, info.Name) || info.Name;
+        const newSpec = prompt(`Enter new specialization (Press Enter to keep [${info.Specialization}]): `, info.Specialization) || info.Specialization;
+        const newDeptInput = prompt(`Enter new department ID (Press Enter to keep [${info.DepartmentID}]): `, info.DepartmentID);
         const newDept = newDeptInput ? parseInt(newDeptInput) : info.DepartmentID;
         const response = await fetch('http://localhost:5000/doctor/update_profile', {
             method: 'PUT',
@@ -144,12 +144,12 @@ const App: React.FC = () => {
 
     const createDoctorAppointment = async () => {
         if (!doctorId) return;
-        const patientIdInput = prompt("Nhập ID bệnh nhân cần đặt lịch: ");
+        const patientIdInput = prompt("Enter patient ID to schedule appointment: ");
         if (!patientIdInput) return;
         const patient_id = parseInt(patientIdInput);
-        const dt = prompt("Nhập ngày giờ cuộc hẹn (YYYY-MM-DD HH:MM:SS): ");
+        const dt = prompt("Enter appointment date and time (YYYY-MM-DD HH:MM:SS): ");
         if (!dt) return;
-        const status = prompt("Nhập trạng thái cuộc hẹn (mặc định 'Scheduled'):", "Scheduled") || "Scheduled";
+        const status = prompt("Enter appointment status (default 'Scheduled'):", "Scheduled") || "Scheduled";
         const response = await fetch('http://localhost:5000/doctor/appointments', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -166,13 +166,13 @@ const App: React.FC = () => {
 
     const updateDoctorAppointment = async () => {
         if (!doctorId) return;
-        const appointmentIdInput = prompt("Nhập ID cuộc hẹn cần chỉnh sửa: ");
+        const appointmentIdInput = prompt("Enter appointment ID to edit: ");
         if (!appointmentIdInput) return;
         const appointment_id = parseInt(appointmentIdInput);
-        const patientIdInput = prompt("Nhập ID bệnh nhân mới (hoặc để trống giữ nguyên): ");
+        const patientIdInput = prompt("Enter new patient ID (or leave blank to keep current): ");
         const new_patient = patientIdInput ? parseInt(patientIdInput) : undefined;
-        const newDt = prompt("Nhập ngày giờ mới (YYYY-MM-DD HH:MM:SS) (để trống giữ nguyên): ");
-        const newStatus = prompt("Nhập trạng thái mới (để trống giữ nguyên): ");
+        const newDt = prompt("Enter new date and time (YYYY-MM-DD HH:MM:SS) (leave blank to keep current): ");
+        const newStatus = prompt("Enter new status (leave blank to keep current): ");
         const response = await fetch('http://localhost:5000/doctor/appointments', {
             method: 'PUT',
             headers: { 'Content-Type': 'application/json' },
@@ -190,14 +190,14 @@ const App: React.FC = () => {
 
     const createMedicalRecord = async () => {
         if (!doctorId) return;
-        const appointmentIdInput = prompt("Nhập ID cuộc hẹn cần tạo hồ sơ y tế: ");
+        const appointmentIdInput = prompt("Enter appointment ID to create medical record for: ");
         if (!appointmentIdInput) return;
         const appointment_id = parseInt(appointmentIdInput);
-        const diagnosis = prompt("Nhập chẩn đoán: ");
+        const diagnosis = prompt("Enter diagnosis: ");
         if (!diagnosis) return;
-        const treatment = prompt("Nhập phác đồ điều trị: ");
+        const treatment = prompt("Enter treatment plan: ");
         if (!treatment) return;
-        const notes = prompt("Nhập ghi chú: ") || "";
+        const notes = prompt("Enter notes: ") || "";
         const response = await fetch('http://localhost:5000/doctor/medical_record', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -212,16 +212,16 @@ const App: React.FC = () => {
         alert(data.message || data.error);
     };
 
-    // -------------------- Các hàm cho Admin --------------------
+    // -------------------- Functions for Admin --------------------
     const adminManageDoctors = async () => {
         let choice = prompt(
-            "--- QUẢN LÝ BÁC SĨ ---\n" +
-            "1. Xem danh sách bác sĩ\n" +
-            "2. Tạo bác sĩ mới\n" +
-            "3. Cập nhật bác sĩ\n" +
-            "4. Xóa bác sĩ\n" +
-            "0. Thoát\n" +
-            "Chọn chức năng:"
+            "--- MANAGE DOCTORS ---\n" +
+            "1. View list of doctors\n" +
+            "2. Create new doctor\n" +
+            "3. Update doctor\n" +
+            "4. Delete doctor\n" +
+            "0. Exit\n" +
+            "Select function:"
         );
         while (choice !== "0") {
             switch (choice) {
@@ -232,11 +232,11 @@ const App: React.FC = () => {
                     break;
                 }
                 case "2": {
-                    const name = prompt("Nhập tên bác sĩ mới:");
+                    const name = prompt("Enter name of new doctor:");
                     if (!name) break;
-                    const specialization = prompt("Nhập chuyên môn của bác sĩ:");
+                    const specialization = prompt("Enter specialization of new doctor:");
                     if (!specialization) break;
-                    const deptInput = prompt("Nhập ID khoa:");
+                    const deptInput = prompt("Enter department ID:");
                     if (!deptInput) break;
                     const department_id = parseInt(deptInput);
                     const response = await fetch('http://localhost:5000/admin/doctor', {
@@ -249,13 +249,13 @@ const App: React.FC = () => {
                     break;
                 }
                 case "3": {
-                    const docId = prompt("Nhập ID bác sĩ cần cập nhật:");
+                    const docId = prompt("Enter ID of doctor to update:");
                     if (!docId) break;
-                    const newName = prompt("Nhập tên mới:");
+                    const newName = prompt("Enter new name:");
                     if (!newName) break;
-                    const newSpec = prompt("Nhập chuyên môn mới:");
+                    const newSpec = prompt("Enter new specialization:");
                     if (!newSpec) break;
-                    const newDeptInput = prompt("Nhập ID khoa mới:");
+                    const newDeptInput = prompt("Enter new department ID:");
                     if (!newDeptInput) break;
                     const newDept = parseInt(newDeptInput);
                     const response = await fetch('http://localhost:5000/admin/doctor', {
@@ -273,7 +273,7 @@ const App: React.FC = () => {
                     break;
                 }
                 case "4": {
-                    const docId = prompt("Nhập ID bác sĩ cần xóa:");
+                    const docId = prompt("Enter ID of doctor to delete:");
                     if (!docId) break;
                     const response = await fetch('http://localhost:5000/admin/doctor', {
                         method: 'DELETE',
@@ -285,17 +285,17 @@ const App: React.FC = () => {
                     break;
                 }
                 default: {
-                    alert("Chức năng không hợp lệ!");
+                    alert("Invalid function!");
                 }
             }
             choice = prompt(
-                "--- QUẢN LÝ BÁC SĨ ---\n" +
-                "1. Xem danh sách bác sĩ\n" +
-                "2. Tạo bác sĩ mới\n" +
-                "3. Cập nhật bác sĩ\n" +
-                "4. Xóa bác sĩ\n" +
-                "0. Thoát\n" +
-                "Chọn chức năng:"
+                "--- MANAGE DOCTORS ---\n" +
+                "1. View list of doctors\n" +
+                "2. Create new doctor\n" +
+                "3. Update doctor\n" +
+                "4. Delete doctor\n" +
+                "0. Exit\n" +
+                "Select function:"
             );
         }
     };
@@ -342,21 +342,21 @@ const App: React.FC = () => {
         alert(JSON.stringify(data.user_profiles, null, 2));
     };
 
-    // Hàm hiển thị menu admin sâu hơn theo lựa chọn
+    // Function to display deeper admin menu based on selection
     const adminSubMenu = async () => {
         let choice = prompt(
-            "--- MENU ADMIN ---\n" +
-            "1. Quản lý Bác sĩ\n" +
-            "2. Quản lý Bệnh nhân\n" +
-            "3. Quản lý Cuộc hẹn\n" +
-            "4. Quản lý Hồ sơ y tế\n" +
-            "5. Quản lý Khoa\n" +
-            "6. Quản lý Dịch vụ\n" +
-            "7. Quản lý Người dùng\n" +
-            "8. Quản lý Hồ sơ người dùng\n" +
-            "9. Xem dữ liệu tất cả các bảng\n" +
-            "0. Thoát\n" +
-            "Chọn chức năng:"
+            "--- ADMIN MENU ---\n" +
+            "1. Manage Doctors\n" +
+            "2. Manage Patients\n" +
+            "3. Manage Appointments\n" +
+            "4. Manage Medical Records\n" +
+            "5. Manage Departments\n" +
+            "6. Manage Services\n" +
+            "7. Manage Users\n" +
+            "8. Manage User Profiles\n" +
+            "9. View data of all tables\n" +
+            "0. Exit\n" +
+            "Select function:"
         );
         while (choice !== "0") {
             switch (choice) {
@@ -390,21 +390,21 @@ const App: React.FC = () => {
                     alert(JSON.stringify(data, null, 2));
                     break;
                 default:
-                    alert("Chức năng không hợp lệ!");
+                    alert("Invalid function!");
             }
             choice = prompt(
-                "--- MENU ADMIN ---\n" +
-                "1. Quản lý Bác sĩ\n" +
-                "2. Quản lý Bệnh nhân\n" +
-                "3. Quản lý Cuộc hẹn\n" +
-                "4. Quản lý Hồ sơ y tế\n" +
-                "5. Quản lý Khoa\n" +
-                "6. Quản lý Dịch vụ\n" +
-                "7. Quản lý Người dùng\n" +
-                "8. Quản lý Hồ sơ người dùng\n" +
-                "9. Xem dữ liệu tất cả các bảng\n" +
-                "0. Thoát\n" +
-                "Chọn chức năng:"
+                "--- ADMIN MENU ---\n" +
+                "1. Manage Doctors\n" +
+                "2. Manage Patients\n" +
+                "3. Manage Appointments\n" +
+                "4. Manage Medical Records\n" +
+                "5. Manage Departments\n" +
+                "6. Manage Services\n" +
+                "7. Manage Users\n" +
+                "8. Manage User Profiles\n" +
+                "9. View data of all tables\n" +
+                "0. Exit\n" +
+                "Select function:"
             );
         }
     };
@@ -422,7 +422,7 @@ const App: React.FC = () => {
         <div style={{ padding: '20px' }}>
             {view === 'login' && (
                 <div>
-                    <h2>Đăng nhập</h2>
+                    <h2>Login</h2>
                     <div style={{ marginBottom: '10px' }}>
                         <input
                             type="text"
@@ -439,52 +439,52 @@ const App: React.FC = () => {
                             onChange={e => setPassword(e.target.value)}
                         />
                     </div>
-                    <button onClick={handleLogin}>Đăng nhập</button>
+                    <button onClick={handleLogin}>Login</button>
                     {message && <p style={{ color: 'red' }}>{message}</p>}
                 </div>
             )}
 
             {view === 'menu' && userInfo && (
                 <div>
-                    <h2>Chào, {userInfo.Username} ({userInfo.Role})</h2>
+                    <h2>Welcome, {userInfo.Username} ({userInfo.Role})</h2>
                     
-                    {/* Menu cho Patient */}
+                    {/* Menu for Patient */}
                     {userInfo.Role === 'Patient' && (
                         <div>
-                            <h3>--- MENU BỆNH NHÂN ---</h3>
-                            <button onClick={patientUpdateProfile}>1. Chỉnh sửa hồ sơ bệnh nhân</button>
-                            <button onClick={fetchAppointments}>2. Hiển thị danh sách appointment</button>
-                            <button onClick={fetchMedicalRecords}>3. Hiển thị hồ sơ y tế</button>
-                            <button onClick={fetchPatientProfile}>4. Xem hồ sơ bệnh nhân</button>
-                            <button onClick={fetchPatientDoctors}>5. Xem danh sách bác sĩ đã hẹn hoặc từng khám cho bạn</button>
+                            <h3>--- PATIENT MENU ---</h3>
+                            <button onClick={patientUpdateProfile}>1. Edit patient profile</button>
+                            <button onClick={fetchAppointments}>2. Display appointment list</button>
+                            <button onClick={fetchMedicalRecords}>3. Display medical records</button>
+                            <button onClick={fetchPatientProfile}>4. View patient profile</button>
+                            <button onClick={fetchPatientDoctors}>5. View list of doctors you have appointments with or have been examined by</button>
                         </div>
                     )}
 
-                    {/* Menu cho Doctor */}
+                    {/* Menu for Doctor */}
                     {userInfo.Role === 'Doctor' && (
                         <div>
-                            <h3>--- MENU BÁC SĨ ---</h3>
-                            <button onClick={fetchDoctorProfile}>1. Hiển thị hồ sơ bác sĩ</button>
-                            <button onClick={doctorUpdateProfile}>2. Chỉnh sửa hồ sơ bác sĩ</button>
-                            <button onClick={fetchDoctorAppointments}>3. Hiển thị danh sách Appointment với bệnh nhân</button>
-                            <button onClick={fetchDoctorMedicalRecords}>4. Hiển thị hồ sơ y tế bạn đã cung cấp</button>
-                            <button onClick={fetchDoctorPatients}>5. Xem danh sách bệnh nhân của bạn</button>
-                            <button onClick={createDoctorAppointment}>6. Đặt lịch hẹn với bệnh nhân</button>
-                            <button onClick={updateDoctorAppointment}>7. Chỉnh sửa lịch hẹn với bệnh nhân</button>
-                            <button onClick={createMedicalRecord}>8. Tạo hồ sơ y tế cho cuộc hẹn</button>
+                            <h3>--- DOCTOR MENU ---</h3>
+                            <button onClick={fetchDoctorProfile}>1. Display doctor profile</button>
+                            <button onClick={doctorUpdateProfile}>2. Edit doctor profile</button>
+                            <button onClick={fetchDoctorAppointments}>3. Display list of Appointments with patients</button>
+                            <button onClick={fetchDoctorMedicalRecords}>4. Display medical records you have provided</button>
+                            <button onClick={fetchDoctorPatients}>5. View list of your patients</button>
+                            <button onClick={createDoctorAppointment}>6. Schedule appointment with patient</button>
+                            <button onClick={updateDoctorAppointment}>7. Edit appointment with patient</button>
+                            <button onClick={createMedicalRecord}>8. Create medical record for appointment</button>
                         </div>
                     )}
 
-                    {/* Menu cho Admin */}
+                    {/* Menu for Admin */}
                     {userInfo.Role === 'Admin' && (
                         <div>
-                            <h3>--- MENU ADMIN ---</h3>
-                            <button onClick={adminSubMenu}>Mở Menu Admin</button>
+                            <h3>--- ADMIN MENU ---</h3>
+                            <button onClick={adminSubMenu}>Open Admin Menu</button>
                         </div>
                     )}
 
                     <div style={{ marginTop: '20px' }}>
-                        <button onClick={logout}>Đăng xuất</button>
+                        <button onClick={logout}>Logout</button>
                     </div>
                 </div>
             )}

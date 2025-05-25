@@ -44,24 +44,24 @@ def create_user_profile_entry(user_id, patient_id):
     conn.close()
 
 def create_patient_account():
-    print("=== Tạo Tài Khoản Bệnh Nhân ===")
+    print("=== Create Patient Account ===")
     while True:
-        username = input("Nhập username: ").strip()
+        username = input("Enter username: ").strip()
         if is_username_taken(username):
-            print("Username đã tồn tại. Vui lòng chọn username khác.")
+            print("Username already exists. Please choose another username.")
         else:
             break
-    password = getpass.getpass("Nhập password: ").strip()
-    print("Nhập thông tin cá nhân:")
-    name = input("Họ và tên: ").strip()
-    dob = input("Ngày sinh (YYYY-MM-DD): ").strip()
-    gender = input("Giới tính: ").strip()
-    contact = input("Liên hệ: ").strip()
+    password = getpass.getpass("Enter password: ").strip()
+    print("Enter personal information:")
+    name = input("Full name: ").strip()
+    dob = input("Date of birth (YYYY-MM-DD): ").strip()
+    gender = input("Gender: ").strip()
+    contact = input("Contact: ").strip()
     
     user_id = create_user(username, password)
     patient_id = create_patient_record(name, dob, gender, contact)
     create_user_profile_entry(user_id, patient_id)
-    print("Tạo tài khoản bệnh nhân thành công.")
+    print("Patient account created successfully.")
 
 if __name__ == "__main__":
     create_patient_account()
