@@ -1,4 +1,5 @@
 from db.connection import get_connection
+import bcrypt
 
 def create_user(username, password_hash, role):
     conn = get_connection()
@@ -77,3 +78,36 @@ def is_admin(user_id):
     if result and result['Role'] == 'Admin':
         return True
     return False
+
+def change_password(user_id, old_password, new_password):
+    conn = get_connection()
+    cursor = conn.cursor(dictionary=True)
+
+    # Get the current password hash from the database
+    sql_get_hash = "SELECT PasswordHash FROM User WHERE UserID = %s"
+    cursor.execute(sql_get_hash, (user_id,))
+    result = cursor.fetchone()
+    if not result:
+        cursor.close()
+        conn.close()
+        return False, "User not found"
+
+    stored_hash = result['PasswordHash']
+
+    # Verify the old password
+    if not bcrypt.checkpw(old_password.encode('utf-8'), stored_hash.encode('utf-8')):
+        cursor.close()
+        conn.close()
+        return False, "Incorrect old password"
+
+    # Hash the new password
+    new_password_hash = bcrypt.hashpw(new_password.encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
+
+    # Update the password hash in the database
+    sql_update_password = "UPDATE User SET PasswordHash = %s WHERE UserID = %s"
+    cursor.execute(sql_update_password, (new_password_hash, user_id))
+    conn.commit()
+
+    cursor.close()
+    conn.close()
+    return True, "Password changed successfully"

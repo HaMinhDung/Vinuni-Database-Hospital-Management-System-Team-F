@@ -32,12 +32,37 @@ def get_patient(patient_id):
     return patient_info
 
 # Cập nhật lại hàm update_patient để nhận thêm các thông tin nếu cần
-def update_patient(patient_id, name, dob=None, gender=None, contact=None):
+def update_patient(patient_id, name=None, dob=None, gender=None, contact=None):
     conn = get_connection()
     cursor = conn.cursor()
-    # Giả sử cập nhật được tất cả các trường nếu chúng không None
-    sql = "UPDATE Patient SET Name = %s, DOB = %s, Gender = %s, Contact = %s WHERE PatientID = %s"
-    cursor.execute(sql, (name, dob, gender, contact, patient_id))
+    
+    updates = []
+    values = []
+
+    if name is not None:
+        updates.append("Name = %s")
+        values.append(name)
+    if dob is not None:
+        updates.append("DOB = %s")
+        values.append(dob)
+    if gender is not None:
+        updates.append("Gender = %s")
+        values.append(gender)
+    if contact is not None:
+        updates.append("Contact = %s")
+        values.append(contact)
+
+    if not updates:
+        print("No fields to update for patient ID", patient_id)
+        cursor.close()
+        conn.close()
+        return # No updates to perform
+
+    sql = "UPDATE Patient SET " + ", ".join(updates) + " WHERE PatientID = %s"
+    values.append(patient_id) # Add patient_id to the end of values
+
+    cursor.execute(sql, tuple(values))
+    
     conn.commit()
     print("✅ Patient updated.")
     cursor.close()

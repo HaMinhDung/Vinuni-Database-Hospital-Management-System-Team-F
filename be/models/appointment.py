@@ -41,7 +41,7 @@ def delete_appointment(appointment_id):
 def get_appointments_by_doctor(doctor_id):
     conn = get_connection()
     cursor = conn.cursor(dictionary=True)
-    sql = "SELECT * FROM Appointment WHERE DoctorID = %s"
+    sql = "SELECT A.*, P.Name AS PatientName FROM Appointment A JOIN Patient P ON A.PatientID = P.PatientID WHERE A.DoctorID = %s"
     cursor.execute(sql, (doctor_id,))
     appointments = cursor.fetchall()
     cursor.close()

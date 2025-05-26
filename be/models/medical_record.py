@@ -22,10 +22,33 @@ def read_medical_records():
     conn.close()
     return records
 
-def update_medical_record(record_id, notes):
+def update_medical_record(record_id, diagnosis=None, treatment=None, notes=None):
     conn = get_connection()
     cursor = conn.cursor()
-    cursor.execute("UPDATE MedicalRecord SET Notes = %s WHERE RecordID = %s", (notes, record_id))
+    updates = []
+    values = []
+
+    if diagnosis is not None:
+        updates.append("Diagnosis = %s")
+        values.append(diagnosis)
+    if treatment is not None:
+        updates.append("Treatment = %s")
+        values.append(treatment)
+    if notes is not None:
+        updates.append("Notes = %s")
+        values.append(notes)
+
+    if not updates:
+        print("No fields to update for medical record ID", record_id)
+        cursor.close()
+        conn.close()
+        return # No updates to perform
+
+    sql = "UPDATE MedicalRecord SET " + ", ".join(updates) + " WHERE RecordID = %s"
+    values.append(record_id) # Add record_id to the end of values
+
+    cursor.execute(sql, tuple(values))
+
     conn.commit()
     print("✅ Medical record updated.")
     cursor.close()

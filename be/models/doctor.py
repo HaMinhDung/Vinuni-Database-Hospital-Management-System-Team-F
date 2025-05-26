@@ -21,11 +21,33 @@ def read_doctors():
     conn.close()
     return doctors
 
-def update_doctor(doctor_id, name, specialization, department_id):
+def update_doctor(doctor_id, name=None, specialization=None, department_id=None):
     conn = get_connection()
     cursor = conn.cursor()
-    sql = "UPDATE Doctor SET Name = %s, Specialization = %s, DepartmentID = %s WHERE DoctorID = %s"
-    cursor.execute(sql, (name, specialization, department_id, doctor_id))
+    updates = []
+    values = []
+
+    if name is not None:
+        updates.append("Name = %s")
+        values.append(name)
+    if specialization is not None:
+        updates.append("Specialization = %s")
+        values.append(specialization)
+    if department_id is not None:
+        updates.append("DepartmentID = %s")
+        values.append(department_id)
+
+    if not updates:
+        print("No fields to update for doctor ID", doctor_id)
+        cursor.close()
+        conn.close()
+        return # No updates to perform
+
+    sql = "UPDATE Doctor SET " + ", ".join(updates) + " WHERE DoctorID = %s"
+    values.append(doctor_id) # Add doctor_id to the end of values
+
+    cursor.execute(sql, tuple(values))
+
     conn.commit()
     print("✅ Doctor infomation updated.")
     cursor.close()

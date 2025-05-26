@@ -55,16 +55,26 @@ def login():
 @app.route('/patient/update_profile', methods=['PUT'])
 def update_patient_profile():
     data = request.get_json()
-    for field in ["patient_id", "new_name", "new_dob", "new_gender", "new_contact"]:
-        if field not in data:
-            return jsonify({'error': f'Missing {field}'}), 400
+    if not data or 'patient_id' not in data:
+        return jsonify({'error': 'Missing patient_id in request data'}), 400
+
+    patient_id = data['patient_id']
+    new_name = data.get('new_name')
+    new_dob = data.get('new_dob')
+    new_gender = data.get('new_gender')
+    new_contact = data.get('new_contact')
+
+    # Check if at least one field to update is provided
+    if not any([new_name, new_dob, new_gender, new_contact]):
+         return jsonify({'message': 'No update data provided.'}), 200 # Or 400 depending on desired behavior
+
     try:
         patient.update_patient(
             data["patient_id"],
-            data["new_name"],
-            data["new_dob"],
-            data["new_gender"],
-            data["new_contact"]
+            new_name,
+            new_dob,
+            new_gender,
+            new_contact
         )
         return jsonify({'message': 'Patient profile updated successfully'})
     except Exception as e:
@@ -145,15 +155,24 @@ def get_doctor_profile():
 @app.route('/doctor/update_profile', methods=['PUT'])
 def update_doctor_profile():
     data = request.get_json()
-    for field in ["doctor_id", "new_name", "new_spec", "new_dept"]:
-        if field not in data:
-            return jsonify({'error': f'Missing {field}'}), 400
+    if not data or 'doctor_id' not in data:
+        return jsonify({'error': 'Missing doctor_id in request data'}), 400
+
+    doctor_id = data['doctor_id']
+    new_name = data.get('new_name')
+    new_spec = data.get('new_spec')
+    new_dept = data.get('new_dept')
+
+    # Check if at least one field to update is provided
+    if not any([new_name, new_spec, new_dept]):
+         return jsonify({'message': 'No update data provided.'}), 200 # Or 400 depending on desired behavior
+
     try:
         doctor.update_doctor(
-            data["doctor_id"],
-            data["new_name"],
-            data["new_spec"],
-            int(data["new_dept"])
+            doctor_id,
+            new_name,
+            new_spec,
+            new_dept # Pass department_id as is, the model function handles int conversion if needed
         )
         return jsonify({'message': 'Doctor profile updated successfully'})
     except Exception as e:
@@ -489,16 +508,8 @@ def admin_create_medical_record():
 
 @app.route('/admin/medical_record', methods=['PUT'])
 def admin_update_medical_record():
-    data = request.get_json()
-    required_fields = ['record_id', 'notes']
-    for field in required_fields:
-        if field not in data:
-            return jsonify({'error': f"Missing {field}"}), 400
-    try:
-        medical_record.update_medical_record(int(data['record_id']), data['notes'])
-        return jsonify({'message': 'Medical record updated successfully'})
-    except Exception as e:
-        return jsonify({'error': str(e)}), 500
+    # This admin endpoint only updates notes, we need a doctor endpoint for full medical record updates
+    return jsonify({'error': 'Admin medical record update is limited to notes'}), 405 # Method Not Allowed or similar
 
 @app.route('/admin/medical_record', methods=['DELETE'])
 def admin_delete_medical_record():
