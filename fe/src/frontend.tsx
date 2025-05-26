@@ -990,8 +990,7 @@ const App: React.FC = () => {
                         {doctorProfile ? (
                             <div>
                                 <p><strong>Name:</strong> {doctorProfile.Name}</p>
-                                <p><strong>Specialization:</strong> {doctorProfile.Specialization}</p>
-                                <p><strong>Department ID:</strong> {doctorProfile.DepartmentID}</p>
+                                <p><strong>Department:</strong> {departments.find(dept => dept.DepartmentID === doctorProfile.DepartmentID)?.Name || 'N/A'}</p>
                             </div>
                         ) : (
                             <p>No profile data available.</p>
