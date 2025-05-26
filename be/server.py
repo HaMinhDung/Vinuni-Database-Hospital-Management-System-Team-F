@@ -729,6 +729,25 @@ def check_admin():
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
+@app.route('/user/change_password', methods=['POST'])
+def change_password_endpoint():
+    data = request.get_json()
+    if not data or 'user_id' not in data or 'old_password' not in data or 'new_password' not in data:
+        return jsonify({'error': 'Missing user ID, old password, or new password'}), 400
+
+    user_id = data['user_id']
+    old_password = data['old_password']
+    new_password = data['new_password']
+
+    try:
+        success, message = user.change_password(user_id, old_password, new_password)
+        if success:
+            return jsonify({'message': message}), 200
+        else:
+            return jsonify({'error': message}), 400
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
 ##############################################
 # Chạy server Flask (mặc định debug=True)
 ##############################################

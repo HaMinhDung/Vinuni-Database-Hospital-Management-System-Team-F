@@ -65,8 +65,8 @@ const App: React.FC = () => {
     const [patientId, setPatientId] = useState<number | null>(null);
     const [message, setMessage] = useState('');
     const [view, setView] = useState<'login' | 'menu'>('login');
-    const [doctorActiveMenuItem, setDoctorActiveMenuItem] = useState<'profile' | 'appointments' | 'medical_records' | 'patients' | 'schedule_appointment' | 'edit_appointment' | 'create_medical_record' | 'edit_doctor_profile' | null>('profile');
-    const [patientActiveMenuItem, setPatientActiveMenuItem] = useState<'profile' | 'appointments' | 'medical_records' | 'doctors' | 'edit_patient_profile' | null>('profile');
+    const [doctorActiveMenuItem, setDoctorActiveMenuItem] = useState<'profile' | 'appointments' | 'medical_records' | 'patients' | 'schedule_appointment' | 'edit_appointment' | 'create_medical_record' | 'edit_doctor_profile' | 'change_password' | null>('profile');
+    const [patientActiveMenuItem, setPatientActiveMenuItem] = useState<'profile' | 'appointments' | 'medical_records' | 'doctors' | 'edit_patient_profile' | 'change_password' | null>('profile');
     const [doctorProfile, setDoctorProfile] = useState<DoctorProfile | null>(null);
     const [doctorAppointments, setDoctorAppointments] = useState<Appointment[]>([]);
     const [doctorMedicalRecords, setDoctorMedicalRecords] = useState<MedicalRecord[]>([]);
@@ -130,6 +130,18 @@ const App: React.FC = () => {
         const finalHours = nextHourDate.getHours().toString().padStart(2, '0');
 
         return `${finalYear}-${finalMonth}-${finalDay} ${finalHours}:00:00`;
+    };
+
+    // Helper function to format date to YYYY-MM-DD HH:MM:SS
+    const formatDateTimeForBackend = (dateString: string): string => {
+        const date = new Date(dateString);
+        const year = date.getFullYear();
+        const month = (date.getMonth() + 1).toString().padStart(2, '0'); // Months are 0-indexed
+        const day = date.getDate().toString().padStart(2, '0');
+        const hours = date.getHours().toString().padStart(2, '0');
+        const minutes = date.getMinutes().toString().padStart(2, '0');
+        const seconds = date.getSeconds().toString().padStart(2, '0');
+        return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
     };
 
     const handleLogin = async () => {
@@ -212,12 +224,12 @@ const App: React.FC = () => {
         }
 
         try {
-            const response = await fetch('http://localhost:5000/patient/update_profile', {
-                method: 'PUT',
-                headers: { 'Content-Type': 'application/json' },
+        const response = await fetch('http://localhost:5000/patient/update_profile', {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(updateData)
-            });
-            const data = await response.json();
+        });
+        const data = await response.json();
             if (response.ok) {
                 setEditPatientProfileMessage(data.message || 'Profile updated successfully!');
                 fetchPatientProfile(patientId); // Refresh profile after update
@@ -239,7 +251,7 @@ const App: React.FC = () => {
         setPatientError(null);
         try {
             const response = await fetch(`http://localhost:5000/patient/appointments?patient_id=${id}`);
-            const data = await response.json();
+        const data = await response.json();
             if (response.ok) {
                 setPatientAppointments(data.appointments || []);
             } else {
@@ -260,7 +272,7 @@ const App: React.FC = () => {
         setPatientError(null);
         try {
             const response = await fetch(`http://localhost:5000/patient/medical_records?patient_id=${id}`);
-            const data = await response.json();
+        const data = await response.json();
             if (response.ok) {
                 setPatientMedicalRecords(data.medical_records || []);
             } else {
@@ -281,7 +293,7 @@ const App: React.FC = () => {
          setPatientError(null);
          try {
             const response = await fetch(`http://localhost:5000/patient/profile?patient_id=${id}`);
-            const data = await response.json();
+        const data = await response.json();
             if (response.ok) {
                  setPatientProfile(data.patient_profile);
                   setEditPatientProfileFormData(data.patient_profile);
@@ -305,7 +317,7 @@ const App: React.FC = () => {
         setPatientError(null);
         try {
             const response = await fetch(`http://localhost:5000/patient/doctors?patient_id=${id}`);
-            const data = await response.json();
+        const data = await response.json();
             if (response.ok) {
                 setPatientDoctors(data.doctors || []);
             } else {
@@ -327,7 +339,7 @@ const App: React.FC = () => {
         setDoctorError(null);
         try {
             const response = await fetch(`http://localhost:5000/doctor/profile?doctor_id=${id}`);
-            const data = await response.json();
+        const data = await response.json();
             if (response.ok) {
                 setDoctorProfile(data.doctor_profile);
                 // Initialize edit form data with fetched profile data
@@ -380,12 +392,12 @@ const App: React.FC = () => {
         }
 
         try {
-            const response = await fetch('http://localhost:5000/doctor/update_profile', {
-                method: 'PUT',
-                headers: { 'Content-Type': 'application/json' },
+        const response = await fetch('http://localhost:5000/doctor/update_profile', {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(updateData)
-            });
-            const data = await response.json();
+        });
+        const data = await response.json();
             if (response.ok) {
                 setEditProfileMessage(data.message || 'Profile updated successfully!');
                 fetchDoctorProfile(doctorId); // Refresh profile after update
@@ -407,8 +419,8 @@ const App: React.FC = () => {
         setLoadingDoctorData(true);
         setDoctorError(null);
         try {
-            const response = await fetch(`http://localhost:5000/doctor/appointments?doctor_id=${doctorId}`);
-            const data = await response.json();
+        const response = await fetch(`http://localhost:5000/doctor/appointments?doctor_id=${doctorId}`);
+        const data = await response.json();
             if (response.ok) {
                 setDoctorAppointments(data.appointments || []);
             } else {
@@ -428,8 +440,8 @@ const App: React.FC = () => {
         setLoadingDoctorData(true);
         setDoctorError(null);
         try {
-            const response = await fetch(`http://localhost:5000/doctor/medical_records?doctor_id=${doctorId}`);
-            const data = await response.json();
+        const response = await fetch(`http://localhost:5000/doctor/medical_records?doctor_id=${doctorId}`);
+        const data = await response.json();
             if (response.ok) {
                 setDoctorMedicalRecords(data.medical_records || []);
             } else {
@@ -449,8 +461,8 @@ const App: React.FC = () => {
         setLoadingDoctorData(true);
         setDoctorError(null);
         try {
-            const response = await fetch(`http://localhost:5000/doctor/patients?doctor_id=${doctorId}`);
-            const data = await response.json();
+        const response = await fetch(`http://localhost:5000/doctor/patients?doctor_id=${doctorId}`);
+        const data = await response.json();
             if (response.ok) {
                 setDoctorPatients(data.patients || []);
             } else {
@@ -480,17 +492,17 @@ const App: React.FC = () => {
         setNewAppointmentMessage(null);
 
         try {
-             const response = await fetch('http://localhost:5000/doctor/appointments', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
+        const response = await fetch('http://localhost:5000/doctor/appointments', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
                     patient_id: parseInt(patient_id),
-                    doctor_id: doctorId,
-                    datetime_str: datetime_str,
+                doctor_id: doctorId,
+                    datetime_str: formatDateTimeForBackend(datetime_str),
                     status: status || 'Scheduled'
-                })
-            });
-            const data = await response.json();
+            })
+        });
+        const data = await response.json();
             if (response.ok) {
                  setNewAppointmentMessage(data.message || 'Appointment created successfully!');
                  // Clear form
@@ -523,7 +535,7 @@ const App: React.FC = () => {
          // Prepare update data, only include fields that are provided
         const updateData: any = { appointment_id: parseInt(appointment_id), doctor_id: doctorId };
         if (patient_id) updateData.patient_id = parseInt(patient_id);
-        if (datetime_str) updateData.datetime_str = datetime_str;
+        if (datetime_str) updateData.datetime_str = formatDateTimeForBackend(datetime_str);
         if (status) updateData.status = status;
 
          // Only proceed if there are changes other than the appointment_id and doctor_id
@@ -534,12 +546,12 @@ const App: React.FC = () => {
         }
 
         try {
-            const response = await fetch('http://localhost:5000/doctor/appointments', {
-                method: 'PUT',
-                headers: { 'Content-Type': 'application/json' },
+        const response = await fetch('http://localhost:5000/doctor/appointments', {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(updateData)
-            });
-            const data = await response.json();
+        });
+        const data = await response.json();
              if (response.ok) {
                  setEditAppointmentMessage(data.message || 'Appointment updated successfully!');
                  // Clear form
@@ -573,17 +585,17 @@ const App: React.FC = () => {
         setNewMedicalRecordMessage(null);
 
         try {
-            const response = await fetch('http://localhost:5000/doctor/medical_record', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
+        const response = await fetch('http://localhost:5000/doctor/medical_record', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
                     appointment_id: parseInt(appointment_id),
-                    diagnosis,
-                    treatment,
+                diagnosis,
+                treatment,
                     notes: notes || ""
-                })
-            });
-            const data = await response.json();
+            })
+        });
+        const data = await response.json();
             if (response.ok) {
                  setNewMedicalRecordMessage(data.message || 'Medical record created successfully!');
                  // Clear form
@@ -940,6 +952,7 @@ const App: React.FC = () => {
     };
 
     const handleChangePassword = async () => {
+        if (!userInfo) return; // Add null check for userInfo
         if (!oldPassword || !newPassword || !confirmNewPassword) {
             setChangePasswordMessage('All fields are required.');
             return;
@@ -949,10 +962,10 @@ const App: React.FC = () => {
             return;
         }
 
-        const response = await fetch('http://localhost:5000/change_password', {
+        const response = await fetch('http://localhost:5000/user/change_password', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ old_password: oldPassword, new_password: newPassword })
+            body: JSON.stringify({ user_id: userInfo.UserID, old_password: oldPassword, new_password: newPassword })
         });
         const data = await response.json();
         if (response.ok) {
@@ -971,8 +984,8 @@ const App: React.FC = () => {
 
         switch (doctorActiveMenuItem) {
             case 'profile':
-                return (
-                    <div>
+    return (
+                <div>
                         <h3>Doctor Profile</h3>
                         {doctorProfile ? (
                             <div>
@@ -991,7 +1004,7 @@ const App: React.FC = () => {
                         <h3>Edit Doctor Profile</h3>
                         {doctorProfile ? (
                             <div>
-                                <div style={{ marginBottom: '10px' }}>
+                    <div style={{ marginBottom: '10px' }}>
                                     <label>Name:</label>
                                     <input
                                         type="text"
@@ -1033,7 +1046,7 @@ const App: React.FC = () => {
                              <button onClick={() => { setShowNewAppointmentRow(true); setNewAppointmentFormData({...newAppointmentFormData, datetime_str: calculateDefaultAppointmentTime()}); }} style={{ padding: '8px', border: '1px solid #ccc', borderRadius: '5px', backgroundColor: '#f9f9f9', transition: 'background-color 0.3s ease', cursor: 'pointer', fontSize: '0.9em', marginRight: '10px' }}>Schedule New Appointment</button>
                         </div>
                         {doctorAppointments.length > 0 ? (
-                            <table style={{ borderCollapse: 'collapse', width: '100%', backgroundColor: '#fff' }}>
+                            <table style={{ borderCollapse: 'collapse', width: '100%', backgroundColor: '#ffffff' }}>
                                 <thead>
                                     <tr>
                                         <th style={{ border: '1px solid #ddd', padding: '8px' }}>Appointment ID</th>
@@ -1251,7 +1264,7 @@ const App: React.FC = () => {
                              <button onClick={() => setShowNewMedicalRecordRow(true)} style={{ padding: '8px', border: '1px solid #ccc', borderRadius: '5px', backgroundColor: '#f9f9f9', transition: 'background-color 0.3s ease', cursor: 'pointer', fontSize: '0.9em' }}>Create New Medical Record</button>
                         </div>
                         {doctorMedicalRecords.length > 0 ? (
-                            <table style={{ borderCollapse: 'collapse', width: '100%', backgroundColor: '#fff' }}>
+                            <table style={{ borderCollapse: 'collapse', width: '100%', backgroundColor: '#ffffff' }}>
                                 <thead>
                                     <tr>
                                         <th style={{ border: '1px solid #ddd', padding: '8px' }}>Record ID</th>
@@ -1453,6 +1466,27 @@ const App: React.FC = () => {
                          <button onClick={fetchDoctorPatients} style={{ padding: '8px', border: '1px solid #ccc', borderRadius: '5px', backgroundColor: '#f9f9f9', transition: 'background-color 0.3s ease', cursor: 'pointer', fontSize: '0.9em' }}>Refresh Patients</button>
                     </div>
                 );
+            case 'change_password':
+                return (
+                    <div>
+                        <h3>Change Password</h3>
+                        {changePasswordMessage && <p style={{ color: changePasswordMessage.includes('Failed') ? 'red' : 'green' }}>{changePasswordMessage}</p>}
+                        <div style={{ marginBottom: '10px' }}>
+                            <label>Old Password:</label>
+                            <input type="password" value={oldPassword} onChange={e => setOldPassword(e.target.value)} style={{ marginLeft: '10px' }} />
+                        </div>
+                        <div style={{ marginBottom: '10px' }}>
+                            <label>New Password:</label>
+                            <input type="password" value={newPassword} onChange={e => setNewPassword(e.target.value)} style={{ marginLeft: '10px' }} />
+                        </div>
+                        <div style={{ marginBottom: '10px' }}>
+                            <label>Confirm New Password:</label>
+                            <input type="password" value={confirmNewPassword} onChange={e => setConfirmNewPassword(e.target.value)} style={{ marginLeft: '10px' }} />
+                        </div>
+                        <button onClick={handleChangePassword} style={{ padding: '8px 15px', marginRight: '10px' }}>Confirm Change</button>
+                        <button onClick={() => setShowChangePasswordForm(false)} style={{ padding: '8px 15px' }}>Cancel</button>
+                    </div>
+                );
              default:
                  return <div>Select a menu item</div>;
          }
@@ -1549,7 +1583,7 @@ const App: React.FC = () => {
                      <div>
                          <h3>Appointments</h3>
                          {patientAppointments.length > 0 ? (
-                             <table style={{ borderCollapse: 'collapse', width: '100%' }}>
+                             <table style={{ borderCollapse: 'collapse', width: '100%', backgroundColor: '#ffffff' }}>
                                  <thead>
                                      <tr>
                                          <th style={{ border: '1px solid #ddd', padding: '8px' }}>Appointment ID</th>
@@ -1580,7 +1614,7 @@ const App: React.FC = () => {
                      <div>
                          <h3>Medical Records</h3>
                          {patientMedicalRecords.length > 0 ? (
-                             <table style={{ borderCollapse: 'collapse', width: '100%' }}>
+                             <table style={{ borderCollapse: 'collapse', width: '100%', backgroundColor: '#ffffff' }}>
                                  <thead>
                                      <tr>
                                          <th style={{ border: '1px solid #ddd', padding: '8px' }}>Record ID</th>
@@ -1615,7 +1649,7 @@ const App: React.FC = () => {
                      <div>
                          <h3>My Doctors</h3>
                           {patientDoctors.length > 0 ? (
-                             <table style={{ borderCollapse: 'collapse', width: '100%' }}>
+                             <table style={{ borderCollapse: 'collapse', width: '100%', backgroundColor: '#ffffff' }}>
                                  <thead>
                                      <tr>
                                          <th style={{ border: '1px solid #ddd', padding: '8px' }}>Doctor ID</th>
@@ -1639,6 +1673,27 @@ const App: React.FC = () => {
                           <button onClick={() => { if (patientId) fetchPatientDoctors(patientId); }} style={{ padding: '8px', border: '1px solid #ccc', borderRadius: '5px', backgroundColor: '#f9f9f9', transition: 'background-color 0.3s ease', cursor: 'pointer', fontSize: '0.9em' }}>Refresh Doctors</button>
                      </div>
                  );
+            case 'change_password':
+                return (
+                    <div>
+                        <h3>Change Password</h3>
+                        {changePasswordMessage && <p style={{ color: changePasswordMessage.includes('Failed') ? 'red' : 'green' }}>{changePasswordMessage}</p>}
+                        <div style={{ marginBottom: '10px' }}>
+                            <label>Old Password:</label>
+                            <input type="password" value={oldPassword} onChange={e => setOldPassword(e.target.value)} style={{ marginLeft: '10px' }} />
+                        </div>
+                        <div style={{ marginBottom: '10px' }}>
+                            <label>New Password:</label>
+                            <input type="password" value={newPassword} onChange={e => setNewPassword(e.target.value)} style={{ marginLeft: '10px' }} />
+                        </div>
+                        <div style={{ marginBottom: '10px' }}>
+                            <label>Confirm New Password:</label>
+                            <input type="password" value={confirmNewPassword} onChange={e => setConfirmNewPassword(e.target.value)} style={{ marginLeft: '10px' }} />
+                        </div>
+                        <button onClick={handleChangePassword} style={{ padding: '8px 15px', marginRight: '10px' }}>Confirm Change</button>
+                        <button onClick={() => setShowChangePasswordForm(false)} style={{ padding: '8px 15px' }}>Cancel</button>
+                    </div>
+                );
              default:
                  return <div>Select a menu item</div>;
         }
@@ -1650,8 +1705,11 @@ const App: React.FC = () => {
     return (
         <div style={{
             padding: '20px',
-            backgroundColor: '#f0f0f0',
-            minHeight: '100vh'
+            backgroundColor: view === 'login' ? 'transparent' : '#f0f0f0', // Change background color based on view
+            minHeight: '100vh',
+            backgroundImage: view === 'login' ? `url('background_loginpage.jpg')` : 'none', // Apply background image only on login
+            backgroundSize: 'cover',
+            backgroundPosition: 'center',
         }}>
             {view === 'login' && (
                 <div style={{
@@ -1661,8 +1719,9 @@ const App: React.FC = () => {
                     textAlign: 'center',
                     width: '400px',
                     margin: 'auto',
-                    backgroundImage: `url('background_loginpage.jpg')`,
-                    backgroundSize: 'cover'
+                    // backgroundImage: `url('background_loginpage.jpg')`, // Remove background image from the box
+                    // backgroundSize: 'cover',
+                    backdropFilter: 'blur(5px)', // Add blur effect
                 }}>
                     <h2>Login</h2>
                     <div style={{ marginBottom: '20px' }}>
@@ -1759,6 +1818,16 @@ const App: React.FC = () => {
                                          backgroundColor: doctorActiveMenuItem === 'medical_records' ? '#e0e0e0' : '#f9f9f9',
                                          transition: 'background-color 0.3s ease'
                                       }} onClick={() => { setDoctorActiveMenuItem('medical_records'); fetchDoctorMedicalRecords(); }}>Medical Records</li>
+                                    <li style={{
+                                          marginBottom: '10px',
+                                          cursor: 'pointer',
+                                          fontWeight: doctorActiveMenuItem === 'change_password' ? 'bold' : 'normal',
+                                          padding: '8px',
+                                          border: '1px solid #ccc',
+                                          borderRadius: '5px',
+                                          backgroundColor: doctorActiveMenuItem === 'change_password' ? '#e0e0e0' : '#f9f9f9',
+                                          transition: 'background-color 0.3s ease'
+                                      }} onClick={() => { setDoctorActiveMenuItem('change_password'); setShowChangePasswordForm(true); }}>Change Password</li>
                                  </ul>
                               </div>
 
@@ -1782,8 +1851,8 @@ const App: React.FC = () => {
                                        fontSize: '0.9em' // Match menu item font size
                                    }}>Logout</button>
                                </div>
-                          </div>
-                      )}
+                        </div>
+                    )}
 
                     {/* Sidebar for Patient */}
                      {userInfo.Role === 'Patient' && (
@@ -1856,8 +1925,18 @@ const App: React.FC = () => {
                                            backgroundColor: patientActiveMenuItem === 'doctors' ? '#e0e0e0' : '#f9f9f9',
                                            transition: 'background-color 0.3s ease'
                                       }} onClick={() => { setPatientActiveMenuItem('doctors'); if (patientId) fetchPatientDoctors(patientId); }}>My Doctors</li>
+                                      <li style={{
+                                          marginBottom: '10px',
+                                          cursor: 'pointer',
+                                          fontWeight: patientActiveMenuItem === 'change_password' ? 'bold' : 'normal',
+                                          padding: '8px',
+                                          border: '1px solid #ccc',
+                                          borderRadius: '5px',
+                                          backgroundColor: patientActiveMenuItem === 'change_password' ? '#e0e0e0' : '#f9f9f9',
+                                          transition: 'background-color 0.3s ease'
+                                      }} onClick={() => { setPatientActiveMenuItem('change_password'); setShowChangePasswordForm(true); }}>Change Password</li>
                                   </ul>
-                               </div>
+                        </div>
 
                              {/* Logout Button and Username (Patient) */}
                              <div style={{
@@ -1879,8 +1958,8 @@ const App: React.FC = () => {
                                        fontSize: '0.9em'
                                    }}>Logout</button>
                                </div>
-                          </div>
-                      )}
+                        </div>
+                    )}
 
                     {/* Main Content */}
                     <div style={{
@@ -1894,27 +1973,7 @@ const App: React.FC = () => {
                          <h2>Welcome, {userInfo?.Role === 'Patient' ? displayPatientFullName : displayFullName} ({userInfo?.Role})</h2>
                         {userInfo?.Role === 'Doctor' && renderDoctorContent()}
                          {userInfo?.Role === 'Patient' && renderPatientContent()}
-                         {showChangePasswordForm && (
-                              <div style={{ marginTop: '20px' }}>
-                                   <h3>Change Password</h3>
-                                   {changePasswordMessage && <p style={{ color: changePasswordMessage.includes('Failed') ? 'red' : 'green' }}>{changePasswordMessage}</p>}
-                                   <div style={{ marginBottom: '10px' }}>
-                                       <label>Old Password:</label>
-                                       <input type="password" value={oldPassword} onChange={e => setOldPassword(e.target.value)} style={{ marginLeft: '10px' }} />
-                                   </div>
-                                   <div style={{ marginBottom: '10px' }}>
-                                       <label>New Password:</label>
-                                       <input type="password" value={newPassword} onChange={e => setNewPassword(e.target.value)} style={{ marginLeft: '10px' }} />
-                                   </div>
-                                   <div style={{ marginBottom: '10px' }}>
-                                       <label>Confirm New Password:</label>
-                                       <input type="password" value={confirmNewPassword} onChange={e => setConfirmNewPassword(e.target.value)} style={{ marginLeft: '10px' }} />
-                                   </div>
-                                   <button onClick={handleChangePassword} style={{ padding: '8px 15px', marginRight: '10px' }}>Confirm Change</button>
-                                   <button onClick={() => setShowChangePasswordForm(false)} style={{ padding: '8px 15px' }}>Cancel</button>
-                              </div>
-                         )}
-                         {/* Other roles' content would go here */}
+                          {/* Other roles' content would go here */}
 
                     </div>
                 </div>
