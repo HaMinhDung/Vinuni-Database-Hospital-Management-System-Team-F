@@ -1,7 +1,7 @@
 from flask import Flask, request, jsonify
 from flask_cors import CORS
 from db.connection import get_connection
-from models import user, patient, appointment, medical_record, user_profile, doctor
+from models import user, patient, appointment, medical_record, user_profile, doctor, admin
 
 app = Flask(__name__)
 CORS(app)
@@ -321,14 +321,14 @@ def sign_up_patient():
 def admin_all_data():
     try:
         all_data = {
-            'doctors': doctor.read_doctors(),
-            'patients': patient.read_patients(),
-            'appointments': appointment.read_appointments(),
-            'medical_records': medical_record.read_medical_records(),
-            'departments': __import__('models.department', fromlist=['read_departments']).read_departments(),
-            'services': __import__('models.service', fromlist=['read_services']).read_services(),
-            'users': user.read_users(),
-            'user_profiles': user_profile.read_user_profiles()
+            'doctors': admin.admin_get_all_doctors(),
+            'patients': admin.admin_get_all_patients(),
+            'appointments': admin.admin_get_all_appointments(),
+            'medical_records': admin.admin_get_all_medical_records(),
+            'departments': admin.admin_get_all_departments(),
+            'services': admin.admin_get_all_services(),
+            # 'users': user.read_users(),
+            # 'user_profiles': user_profile.read_user_profiles()
         }
         return jsonify(all_data)
     except Exception as e:
@@ -337,14 +337,17 @@ def admin_all_data():
 ##############################################
 # Các endpoint cho Bác sĩ
 ##############################################
+
+# Admin get all doctors
 @app.route('/admin/doctor', methods=['GET'])
-def admin_get_doctors():
+def admin_get_all_doctors():
     try:
-        docs = doctor.read_doctors()
+        docs = admin.admin_get_all_doctors()
         return jsonify({'doctors': docs})
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
+# Admin create doctor
 @app.route('/admin/doctor', methods=['POST'])
 def admin_create_doctor():
     data = request.get_json()
@@ -353,46 +356,59 @@ def admin_create_doctor():
         if field not in data or not data[field]:
             return jsonify({'error': f"Missing {field}"}), 400
     try:
-        doctor.create_doctor(data['name'], data['specialization'], int(data['department_id']))
+        admin.admin_create_doctor(data['name'], data['specialization'], int(data['department_id']))
         return jsonify({'message': 'Doctor created successfully'})
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
-@app.route('/admin/doctor', methods=['PUT'])
-def admin_update_doctor():
-    data = request.get_json()
-    required_fields = ['doctor_id', 'new_name', 'new_spec', 'new_dept']
-    for field in required_fields:
-        if field not in data or not data[field]:
-            return jsonify({'error': f"Missing {field}"}), 400
-    try:
-        doctor.update_doctor(data['doctor_id'], data['new_name'], data['new_spec'], int(data['new_dept']))
-        return jsonify({'message': 'Doctor updated successfully'})
-    except Exception as e:
-        return jsonify({'error': str(e)}), 500
-
+# Admin delete doctor
 @app.route('/admin/doctor', methods=['DELETE'])
 def admin_delete_doctor():
     data = request.get_json()
     if 'doctor_id' not in data or not data['doctor_id']:
         return jsonify({'error': 'Missing doctor_id'}), 400
     try:
-        doctor.delete_doctor(data['doctor_id'])
+        admin.admin_delete_doctor(int(data['doctor_id']))
         return jsonify({'message': 'Doctor deleted successfully'})
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+# Admin read doctor by ID
+@app.route('/admin/doctor/<int:doctor_id>', methods=['GET'])
+def admin_get_doctor(doctor_id):
+    try:
+        doctor_info = admin.admin_get_doctor(doctor_id)
+        if not doctor_info:
+            return jsonify({'error': 'Doctor not found'}), 404
+        return jsonify({'doctor': doctor_info})
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
 ##############################################
 # Các endpoint cho Bệnh nhân
 ##############################################
+
+# Admin get all patients
 @app.route('/admin/patient', methods=['GET'])
-def admin_get_patients():
+def admin_get_all_patients():
     try:
-        pts = patient.read_patients()
-        return jsonify({'patients': pts})
+        patients = admin.admin_get_all_patients()
+        return jsonify({'patients': patients})
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+    
+# Admin get patient by ID
+@app.route('/admin/patient/<int:patient_id>', methods=['GET'])
+def admin_get_patient(patient_id):
+    try:
+        patient_info = admin.admin_get_patient(patient_id)
+        if not patient_info:
+            return jsonify({'error': 'Patient not found'}), 404
+        return jsonify({'patient': patient_info})
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
+# Admin create patient
 @app.route('/admin/patient', methods=['POST'])
 def admin_create_patient():
     data = request.get_json()
@@ -401,182 +417,122 @@ def admin_create_patient():
         if field not in data or not data[field]:
             return jsonify({'error': f"Missing {field}"}), 400
     try:
-        patient.create_patient(data['name'], data['dob'], data['gender'], data['contact'])
-        return jsonify({'message': 'Patient created successfully'})
+        patient_id = admin.admin_create_patient(data['name'], data['dob'], data['gender'], data['contact'])
+        return jsonify({'message': 'Patient created successfully', 'patient_id': patient_id})
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
-@app.route('/admin/patient', methods=['PUT'])
-def admin_update_patient():
-    data = request.get_json()
-    required_fields = ['patient_id', 'new_name', 'new_dob', 'new_gender', 'new_contact']
-    for field in required_fields:
-        if field not in data:
-            return jsonify({'error': f"Missing {field}"}), 400
-    try:
-        patient.update_patient(data['patient_id'], data['new_name'], data['new_dob'], data['new_gender'], data['new_contact'])
-        return jsonify({'message': 'Patient updated successfully'})
-    except Exception as e:
-        return jsonify({'error': str(e)}), 500
-
+# Admin delete patient
 @app.route('/admin/patient', methods=['DELETE'])
 def admin_delete_patient():
     data = request.get_json()
     if 'patient_id' not in data or not data['patient_id']:
         return jsonify({'error': 'Missing patient_id'}), 400
     try:
-        patient.delete_patient(data['patient_id'])
+        admin.admin_delete_patient(int(data['patient_id']))
         return jsonify({'message': 'Patient deleted successfully'})
     except Exception as e:
         return jsonify({'error': str(e)}), 500
+    
+##############################################
+# Endpoints for Appointments
+##############################################
 
-##############################################
-# Các endpoint cho Cuộc hẹn
-##############################################
+# Admin get all appointments
 @app.route('/admin/appointment', methods=['GET'])
-def admin_get_appointments():
+def admin_get_all_appointments():
     try:
-        appts = appointment.read_appointments()
-        return jsonify({'appointments': appts})
+        appointments = admin.admin_get_all_appointments()
+        return jsonify({'appointments': appointments})
     except Exception as e:
         return jsonify({'error': str(e)}), 500
-
-@app.route('/admin/appointment', methods=['POST'])
-def admin_create_appointment():
-    data = request.get_json()
-    required_fields = ['patient_id', 'doctor_id', 'datetime_str', 'status']
-    for field in required_fields:
-        if field not in data or not data[field]:
-            return jsonify({'error': f"Missing {field}"}), 400
+    
+# Admin get appointment by ID
+@app.route('/admin/appointment/<int:appointment_id>', methods=['GET'])
+def admin_get_appointment(appointment_id):
     try:
-        appointment.create_appointment(int(data['patient_id']), int(data['doctor_id']), data['datetime_str'], data['status'])
-        return jsonify({'message': 'Appointment created successfully'})
+        appointment_info = admin.admin_get_appointment(appointment_id)
+        if not appointment_info:
+            return jsonify({'error': 'Appointment not found'}), 404
+        return jsonify({'appointment': appointment_info})
     except Exception as e:
         return jsonify({'error': str(e)}), 500
-
-@app.route('/admin/appointment', methods=['PUT'])
-def admin_update_appointment():
-    data = request.get_json()
-    required_fields = ['appointment_id', 'patient_id', 'doctor_id', 'datetime_str', 'status']
-    for field in required_fields:
-        if field not in data:
-            return jsonify({'error': f"Missing {field}"}), 400
-    try:
-        appointment.update_appointment(int(data['appointment_id']), int(data['patient_id']), int(data['doctor_id']), data['datetime_str'], data['status'])
-        return jsonify({'message': 'Appointment updated successfully'})
-    except Exception as e:
-        return jsonify({'error': str(e)}), 500
-
-@app.route('/admin/appointment', methods=['DELETE'])
-def admin_delete_appointment():
-    data = request.get_json()
-    if 'appointment_id' not in data or not data['appointment_id']:
-        return jsonify({'error': 'Missing appointment_id'}), 400
-    try:
-        # Nếu hàm delete_appointment chưa được định nghĩa, có thể trả về thông báo Not implemented.
-        if hasattr(appointment, 'delete_appointment'):
-            appointment.delete_appointment(int(data['appointment_id']))
-            return jsonify({'message': 'Appointment deleted successfully'})
-        else:
-            return jsonify({'error': 'Delete appointment not implemented'}), 501
-    except Exception as e:
-        return jsonify({'error': str(e)}), 500
-
+    
 ##############################################
-# Các endpoint cho Hồ sơ y tế
+# Endpoints for Departments
 ##############################################
-@app.route('/admin/medical_record', methods=['GET'])
-def admin_get_medical_records():
-    try:
-        records = medical_record.read_medical_records()
-        return jsonify({'medical_records': records})
-    except Exception as e:
-        return jsonify({'error': str(e)}), 500
 
-@app.route('/admin/medical_record', methods=['POST'])
-def admin_create_medical_record():
-    data = request.get_json()
-    required_fields = ['appointment_id', 'diagnosis', 'treatment', 'notes']
-    for field in required_fields:
-        if field not in data or not data[field]:
-            return jsonify({'error': f"Missing {field}"}), 400
-    try:
-        medical_record.create_medical_record(int(data['appointment_id']), data['diagnosis'], data['treatment'], data['notes'])
-        return jsonify({'message': 'Medical record created successfully'})
-    except Exception as e:
-        return jsonify({'error': str(e)}), 500
-
-@app.route('/admin/medical_record', methods=['PUT'])
-def admin_update_medical_record():
-    # This admin endpoint only updates notes, we need a doctor endpoint for full medical record updates
-    return jsonify({'error': 'Admin medical record update is limited to notes'}), 405 # Method Not Allowed or similar
-
-@app.route('/admin/medical_record', methods=['DELETE'])
-def admin_delete_medical_record():
-    data = request.get_json()
-    if 'record_id' not in data or not data['record_id']:
-        return jsonify({'error': 'Missing record_id'}), 400
-    try:
-        medical_record.delete_medical_record(int(data['record_id']))
-        return jsonify({'message': 'Medical record deleted successfully'})
-    except Exception as e:
-        return jsonify({'error': str(e)}), 500
-
-##############################################
-# Các endpoint cho Khoa
-##############################################
+# Admin get all departments
 @app.route('/admin/department', methods=['GET'])
-def admin_get_departments():
+def admin_get_all_departments():
     try:
-        depts = __import__('models.department', fromlist=['read_departments']).read_departments()
-        return jsonify({'departments': depts})
+        departments = admin.admin_get_all_departments()
+        return jsonify({'departments': departments})
     except Exception as e:
         return jsonify({'error': str(e)}), 500
-
+    
+# Admin create department
 @app.route('/admin/department', methods=['POST'])
 def admin_create_department():
     data = request.get_json()
     if 'name' not in data or not data['name']:
-        return jsonify({'error': 'Missing name'}), 400
+        return jsonify({'error': 'Missing department name'}), 400
     try:
-        __import__('models.department', fromlist=['create_department']).create_department(data['name'])
-        return jsonify({'message': 'Department created successfully'})
+        department_id = admin.admin_create_department(data['name'])
+        return jsonify({'message': 'Department created successfully', 'department_id': department_id})
     except Exception as e:
         return jsonify({'error': str(e)}), 500
-
-@app.route('/admin/department', methods=['PUT'])
-def admin_update_department():
-    data = request.get_json()
-    if 'department_id' not in data or 'new_name' not in data or not data['new_name']:
-        return jsonify({'error': 'Missing department_id or new_name'}), 400
-    try:
-        __import__('models.department', fromlist=['update_department']).update_department(data['department_id'], data['new_name'])
-        return jsonify({'message': 'Department updated successfully'})
-    except Exception as e:
-        return jsonify({'error': str(e)}), 500
-
+    
+# Admin delete department
 @app.route('/admin/department', methods=['DELETE'])
 def admin_delete_department():
     data = request.get_json()
     if 'department_id' not in data or not data['department_id']:
         return jsonify({'error': 'Missing department_id'}), 400
     try:
-        __import__('models.department', fromlist=['delete_department']).delete_department(data['department_id'])
+        admin.admin_delete_department(int(data['department_id']))
         return jsonify({'message': 'Department deleted successfully'})
     except Exception as e:
         return jsonify({'error': str(e)}), 500
+    
+##############################################
+# Enpoints for Medical Records
+##############################################
 
-##############################################
-# Các endpoint cho Dịch vụ
-##############################################
-@app.route('/admin/service', methods=['GET'])
-def admin_get_services():
+# Admin get all medical records
+@app.route('/admin/medical_record', methods=['GET'])
+def admin_get_all_medical_records():
     try:
-        svcs = __import__('models.service', fromlist=['read_services']).read_services()
-        return jsonify({'services': svcs})
+        records = admin.admin_get_all_medical_records()
+        return jsonify({'medical_records': records})
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+    
+##############################################
+# Enpoints for Services
+##############################################
+
+# Admin get all services
+@app.route('/admin/service', methods=['GET'])
+def admin_get_all_services():
+    try:
+        services = admin.admin_get_all_services()
+        return jsonify({'services': services})
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+    
+# Admin get service by ID
+@app.route('/admin/service/<int:service_id>', methods=['GET'])
+def admin_get_service(service_id):
+    try:
+        service_info = admin.admin_get_service(service_id)
+        if not service_info:
+            return jsonify({'error': 'Service not found'}), 404
+        return jsonify({'service': service_info})
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
+# Admin create service
 @app.route('/admin/service', methods=['POST'])
 def admin_create_service():
     data = request.get_json()
@@ -585,131 +541,34 @@ def admin_create_service():
         if field not in data or not data[field]:
             return jsonify({'error': f"Missing {field}"}), 400
     try:
-        __import__('models.service', fromlist=['create_service']).create_service(data['name'], data['cost'])
-        return jsonify({'message': 'Service created successfully'})
+        service_id = admin.admin_create_service(data['name'], float(data['cost']))
+        return jsonify({'message': 'Service created successfully', 'service_id': service_id})
     except Exception as e:
         return jsonify({'error': str(e)}), 500
-
-@app.route('/admin/service', methods=['PUT'])
-def admin_update_service():
-    data = request.get_json()
-    required_fields = ['service_id', 'new_name', 'new_cost']
-    for field in required_fields:
-        if field not in data:
-            return jsonify({'error': f"Missing {field}"}), 400
-    try:
-        __import__('models.service', fromlist=['update_service']).update_service(data['service_id'], data['new_name'], data['new_cost'])
-        return jsonify({'message': 'Service updated successfully'})
-    except Exception as e:
-        return jsonify({'error': str(e)}), 500
-
+    
+# Admin delete service
 @app.route('/admin/service', methods=['DELETE'])
 def admin_delete_service():
     data = request.get_json()
     if 'service_id' not in data or not data['service_id']:
         return jsonify({'error': 'Missing service_id'}), 400
     try:
-        __import__('models.service', fromlist=['delete_service']).delete_service(data['service_id'])
+        admin.admin_delete_service(int(data['service_id']))
         return jsonify({'message': 'Service deleted successfully'})
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
-##############################################
-# Các endpoint cho Người dùng
-##############################################
-@app.route('/admin/user', methods=['GET'])
-def admin_get_users():
-    try:
-        users_list = user.read_users()
-        return jsonify({'users': users_list})
-    except Exception as e:
-        return jsonify({'error': str(e)}), 500
-
-@app.route('/admin/user', methods=['POST'])
-def admin_create_user():
+# Admin update service
+@app.route('/admin/service', methods=['PUT'])
+def admin_update_service():
     data = request.get_json()
-    required_fields = ['username', 'password_hash', 'role']
+    required_fields = ['service_id', 'name', 'cost']
     for field in required_fields:
         if field not in data or not data[field]:
             return jsonify({'error': f"Missing {field}"}), 400
     try:
-        user.create_user(data['username'], data['password_hash'], data['role'])
-        return jsonify({'message': 'User created successfully'})
-    except Exception as e:
-        return jsonify({'error': str(e)}), 500
-
-@app.route('/admin/user', methods=['PUT'])
-def admin_update_user():
-    data = request.get_json()
-    required_fields = ['user_id', 'new_username', 'new_password_hash', 'new_role']
-    for field in required_fields:
-        if field not in data:
-            return jsonify({'error': f"Missing {field}"}), 400
-    try:
-        user.update_user_full(data['user_id'], data['new_username'], data['new_password_hash'], data['new_role'])
-        return jsonify({'message': 'User updated successfully'})
-    except Exception as e:
-        return jsonify({'error': str(e)}), 500
-
-@app.route('/admin/user', methods=['DELETE'])
-def admin_delete_user():
-    data = request.get_json()
-    if 'user_id' not in data or not data['user_id']:
-        return jsonify({'error': 'Missing user_id'}), 400
-    try:
-        user.delete_user(data['user_id'])
-        return jsonify({'message': 'User deleted successfully'})
-    except Exception as e:
-        return jsonify({'error': str(e)}), 500
-
-##############################################
-# Các endpoint cho Hồ sơ người dùng
-##############################################
-@app.route('/admin/user_profile', methods=['GET'])
-def admin_get_user_profiles():
-    try:
-        profiles = user_profile.read_user_profiles()
-        return jsonify({'user_profiles': profiles})
-    except Exception as e:
-        return jsonify({'error': str(e)}), 500
-
-@app.route('/admin/user_profile', methods=['POST'])
-def admin_create_user_profile():
-    data = request.get_json()
-    required_fields = ['user_id']
-    for field in required_fields:
-        if field not in data or not data[field]:
-            return jsonify({'error': f"Missing {field}"}), 400
-    # doctor_id và patient_id là tùy chọn
-    doctor_id = data.get('doctor_id', None)
-    patient_id = data.get('patient_id', None)
-    try:
-        user_profile.create_user_profile(data['user_id'], doctor_id, patient_id)
-        return jsonify({'message': 'User profile created successfully'})
-    except Exception as e:
-        return jsonify({'error': str(e)}), 500
-
-@app.route('/admin/user_profile', methods=['PUT'])
-def admin_update_user_profile():
-    data = request.get_json()
-    if 'user_profile_id' not in data or not data['user_profile_id']:
-        return jsonify({'error': 'Missing user_profile_id'}), 400
-    doctor_id = data.get('doctor_id', None)
-    patient_id = data.get('patient_id', None)
-    try:
-        user_profile.update_user_profile(data['user_profile_id'], doctor_id, patient_id)
-        return jsonify({'message': 'User profile updated successfully'})
-    except Exception as e:
-        return jsonify({'error': str(e)}), 500
-
-@app.route('/admin/user_profile', methods=['DELETE'])
-def admin_delete_user_profile():
-    data = request.get_json()
-    if 'user_profile_id' not in data or not data['user_profile_id']:
-        return jsonify({'error': 'Missing user_profile_id'}), 400
-    try:
-        user_profile.delete_user_profile(data['user_profile_id'])
-        return jsonify({'message': 'User profile deleted successfully'})
+        admin.admin_update_service(int(data['service_id']), data['name'], float(data['cost']))
+        return jsonify({'message': 'Service updated successfully'})
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
