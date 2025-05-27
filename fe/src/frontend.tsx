@@ -1741,7 +1741,8 @@ const App: React.FC = () => {
                             style={{ padding: '10px', width: 'calc(100% - 22px)' }}
                         />
                     </div>
-                    <button onClick={handleLogin} style={{ padding: '10px 40px' }}>Login</button>
+                    <button onClick={handleLogin} style={{ padding: '10px 40px', marginRight: '10px' }}>Login</button>
+                    <button onClick={() => window.location.href = 'http://localhost:3000/signup'} style={{ padding: '10px 40px' }}>Sign Up</button>
                     {message && <p style={{ color: 'red' }}>{message}</p>}
                 </div>
             )}
