@@ -103,6 +103,26 @@ const App: React.FC = () => {
     const [newPassword, setNewPassword] = useState('');
     const [confirmNewPassword, setConfirmNewPassword] = useState('');
     const [changePasswordMessage, setChangePasswordMessage] = useState<string | null>(null);
+    const [adminActiveMenuItem, setAdminActiveMenuItem] = useState<'all_data' | 'manage_doctors' | 'manage_patients' | 'manage_appointments' | 'manage_medical_records' | 'manage_departments' | 'manage_services' | 'change_password' | null>(null);
+
+    // Admin states
+    const [adminDoctors, setAdminDoctors] = useState<DoctorProfile[]>([]);
+    const [adminPatients, setAdminPatients] = useState<Patient[]>([]);
+    const [adminAppointments, setAdminAppointments] = useState<Appointment[]>([]);
+    const [adminMedicalRecords, setAdminMedicalRecords] = useState<MedicalRecord[]>([]);
+    const [adminDepartments, setAdminDepartments] = useState<Department[]>([]);
+    const [adminServices, setAdminServices] = useState<any[]>([]); // Assuming services have Name and Cost at least
+    const [adminUsers, setAdminUsers] = useState<UserInfo[]>([]);
+    const [adminUserProfiles, setAdminUserProfiles] = useState<any[]>([]); // Assuming UserProfile has UserID, DoctorID, PatientID
+    const [adminAllData, setAdminAllData] = useState<any>(null);
+    const [loadingAdminData, setLoadingAdminData] = useState<boolean>(false);
+    const [adminError, setAdminError] = useState<string | null>(null);
+
+    // Admin Doctor Management states
+    const [showDoctorForm, setShowDoctorForm] = useState<boolean>(false);
+    const [editingDoctor, setEditingDoctor] = useState<DoctorProfile | null>(null);
+    const [doctorFormData, setDoctorFormData] = useState<Partial<DoctorProfile>>({});
+    const [doctorFormMessage, setDoctorFormMessage] = useState<string | null>(null);
 
     // Function to calculate the next rounded hour 24 hours from now
     const calculateDefaultAppointmentTime = () => {
@@ -176,6 +196,8 @@ const App: React.FC = () => {
                  if (data.patient_id) {
                      fetchPatientProfile(data.patient_id);
                  }
+            } else if (data.user_info.Role === 'Admin') {
+                setAdminActiveMenuItem('all_data'); // Set default view for admin
             }
         } else {
             setMessage(data.error || 'Login failed');
@@ -375,15 +397,17 @@ const App: React.FC = () => {
 
         // Prepare update data, only include fields that have changed or are required
         const updateData: any = { doctor_id: doctorId };
-        if (editProfileFormData.Name !== doctorProfile?.Name) updateData.new_name = editProfileFormData.Name;
+
+        // Always send Name and DepartmentID, backend should handle updating only if changed
+        updateData.new_name = editProfileFormData.Name;
 
         // Find the selected department name based on the selected DepartmentID
         const selectedDepartment = departments.find(dept => dept.DepartmentID === editProfileFormData.DepartmentID);
         const newSpecialization = selectedDepartment ? selectedDepartment.Name : ''; // Use department name as specialization
 
-        // Add specialization and department ID to updateData if they have changed
-        if (newSpecialization !== doctorProfile?.Specialization) updateData.new_spec = newSpecialization;
-        if (editProfileFormData.DepartmentID !== doctorProfile?.DepartmentID) updateData.new_dept = editProfileFormData.DepartmentID;
+        // Always send the new specialization and department ID
+        updateData.new_spec = newSpecialization;
+        updateData.new_dept = editProfileFormData.DepartmentID;
 
         // Only proceed if there are changes other than the doctor_id
         if (Object.keys(updateData).length <= 1) {
@@ -578,6 +602,7 @@ const App: React.FC = () => {
 
         if (!appointment_id || !diagnosis || !treatment) {
              setNewMedicalRecordMessage('Appointment ID, Diagnosis, and Treatment are required.');
+             console.error('Validation failed: Missing required fields for medical record.'); // Add console log
              return;
         }
 
@@ -606,10 +631,12 @@ const App: React.FC = () => {
             } else {
                  setNewMedicalRecordMessage(data.error || 'Failed to create medical record');
                  setDoctorError(data.error || 'Failed to create medical record');
+                 console.error('API Error creating medical record:', data.error); // Log API error
             }
         } catch (error: any) {
              setNewMedicalRecordMessage(error.message || 'An error occurred while creating medical record');
              setDoctorError(error.message || 'An error occurred while creating medical record');
+             console.error('Catch Error creating medical record:', error); // Log catch error
         } finally {
              setLoadingDoctorData(false);
         }
@@ -682,199 +709,200 @@ const App: React.FC = () => {
     };
 
     // -------------------- Functions for Admin --------------------
-    const adminManageDoctors = async () => {
-        let choice = prompt(
-            "--- MANAGE DOCTORS ---\n" +
-            "1. View list of doctors\n" +
-            "2. Create new doctor\n" +
-            "3. Update doctor\n" +
-            "4. Delete doctor\n" +
-            "0. Exit\n" +
-            "Select function:"
-        );
-        while (choice !== "0") {
-            switch (choice) {
-                case "1": {
-                    const response = await fetch('http://localhost:5000/admin/doctor');
-                    const data = await response.json();
-                    alert(JSON.stringify(data.doctors, null, 2));
-                    break;
-                }
-                case "2": {
-                    const name = prompt("Enter name of new doctor:");
-                    if (!name) break;
-                    const specialization = prompt("Enter specialization of new doctor:");
-                    if (!specialization) break;
-                    const deptInput = prompt("Enter department ID:");
-                    if (!deptInput) break;
-                    const department_id = parseInt(deptInput);
-                    const response = await fetch('http://localhost:5000/admin/doctor', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ name, specialization, department_id })
-                    });
-                    const data = await response.json();
-                    alert(data.message || data.error);
-                    break;
-                }
-                case "3": {
-                    const docId = prompt("Enter ID of doctor to update:");
-                    if (!docId) break;
-                    const newName = prompt("Enter new name:");
-                    if (!newName) break;
-                    const newSpec = prompt("Enter new specialization:");
-                    if (!newSpec) break;
-                    const newDeptInput = prompt("Enter new department ID:");
-                    if (!newDeptInput) break;
-                    const newDept = parseInt(newDeptInput);
-                    const response = await fetch('http://localhost:5000/admin/doctor', {
-                        method: 'PUT',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({
-                            doctor_id: parseInt(docId),
-                            new_name: newName,
-                            new_spec: newSpec,
-                            new_dept: newDept
-                        })
-                    });
-                    const data = await response.json();
-                    alert(data.message || data.error);
-                    break;
-                }
-                case "4": {
-                    const docId = prompt("Enter ID of doctor to delete:");
-                    if (!docId) break;
-                    const response = await fetch('http://localhost:5000/admin/doctor', {
-                        method: 'DELETE',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ doctor_id: parseInt(docId) })
-                    });
-                    const data = await response.json();
-                    alert(data.message || data.error);
-                    break;
-                }
-                default: {
-                    alert("Invalid function!");
-                }
+    const fetchAdminDoctors = async () => {
+        setLoadingAdminData(true);
+        setAdminError(null);
+        try {
+            const response = await fetch('http://localhost:5000/admin/doctor');
+            const data = await response.json();
+            if (response.ok && data.doctors) {
+                setAdminDoctors(data.doctors);
+            } else {
+                setAdminError(data.error || 'Failed to fetch doctors');
+                setAdminDoctors([]);
             }
-            choice = prompt(
-                "--- MANAGE DOCTORS ---\n" +
-                "1. View list of doctors\n" +
-                "2. Create new doctor\n" +
-                "3. Update doctor\n" +
-                "4. Delete doctor\n" +
-                "0. Exit\n" +
-                "Select function:"
-            );
+        } catch (error: any) {
+            setAdminError(error.message || 'An error occurred while fetching doctors');
+            setAdminDoctors([]);
+        } finally {
+            setLoadingAdminData(false);
         }
     };
 
-    const adminManagePatients = async () => {
-        const response = await fetch('http://localhost:5000/admin/patient');
-        const data = await response.json();
-        alert(JSON.stringify(data.patients, null, 2));
-    };
-
-    const adminManageAppointments = async () => {
-        const response = await fetch('http://localhost:5000/admin/appointment');
-        const data = await response.json();
-        alert(JSON.stringify(data.appointments, null, 2));
-    };
-
-    const adminManageMedicalRecords = async () => {
-        const response = await fetch('http://localhost:5000/admin/medical_record');
-        const data = await response.json();
-        alert(JSON.stringify(data.medical_records, null, 2));
-    };
-
-    const adminManageDepartments = async () => {
-        const response = await fetch('http://localhost:5000/admin/department');
-        const data = await response.json();
-        alert(JSON.stringify(data.departments, null, 2));
-    };
-
-    const adminManageServices = async () => {
-        const response = await fetch('http://localhost:5000/admin/service');
-        const data = await response.json();
-        alert(JSON.stringify(data.services, null, 2));
-    };
-
-    const adminManageUsers = async () => {
-        const response = await fetch('http://localhost:5000/admin/user');
-        const data = await response.json();
-        alert(JSON.stringify(data.users, null, 2));
-    };
-
-    const adminManageUserProfiles = async () => {
-        const response = await fetch('http://localhost:5000/admin/user_profile');
-        const data = await response.json();
-        alert(JSON.stringify(data.user_profiles, null, 2));
-    };
-
-    // Function to display deeper admin menu based on selection
-    const adminSubMenu = async () => {
-        let choice = prompt(
-            "--- ADMIN MENU ---\n" +
-            "1. Manage Doctors\n" +
-            "2. Manage Patients\n" +
-            "3. Manage Appointments\n" +
-            "4. Manage Medical Records\n" +
-            "5. Manage Departments\n" +
-            "6. Manage Services\n" +
-            "7. Manage Users\n" +
-            "8. Manage User Profiles\n" +
-            "9. View data of all tables\n" +
-            "0. Exit\n" +
-            "Select function:"
-        );
-        while (choice !== "0") {
-            switch (choice) {
-                case "1":
-                    adminManageDoctors();
-                    break;
-                case "2":
-                    adminManagePatients();
-                    break;
-                case "3":
-                    adminManageAppointments();
-                    break;
-                case "4":
-                    adminManageMedicalRecords();
-                    break;
-                case "5":
-                    adminManageDepartments();
-                    break;
-                case "6":
-                    adminManageServices();
-                    break;
-                case "7":
-                    adminManageUsers();
-                    break;
-                case "8":
-                    adminManageUserProfiles();
-                    break;
-                case "9":
-                    const response = await fetch('http://localhost:5000/admin/all_data');
-                    const data = await response.json();
-                    alert(JSON.stringify(data, null, 2));
-                    break;
-                default:
-                    alert("Invalid function!");
+    const fetchAdminPatients = async () => {
+        setLoadingAdminData(true);
+        setAdminError(null);
+        try {
+            const response = await fetch('http://localhost:5000/admin/patient');
+            const data = await response.json();
+            if (response.ok && data.patients) {
+                setAdminPatients(data.patients);
+            } else {
+                setAdminError(data.error || 'Failed to fetch patients');
+                setAdminPatients([]);
             }
-            choice = prompt(
-                "--- ADMIN MENU ---\n" +
-                "1. Manage Doctors\n" +
-                "2. Manage Patients\n" +
-                "3. Manage Appointments\n" +
-                "4. Manage Medical Records\n" +
-                "5. Manage Departments\n" +
-                "6. Manage Services\n" +
-                "7. Manage Users\n" +
-                "8. Manage User Profiles\n" +
-                "9. View data of all tables\n" +
-                "0. Exit\n" +
-                "Select function:"
-            );
+        } catch (error: any) {
+            setAdminError(error.message || 'An error occurred while fetching patients');
+            setAdminPatients([]);
+        } finally {
+            setLoadingAdminData(false);
+        }
+    };
+
+    const fetchAdminAppointments = async () => {
+        setLoadingAdminData(true);
+        setAdminError(null);
+        try {
+            const response = await fetch('http://localhost:5000/admin/appointment');
+            const data = await response.json();
+            if (response.ok && data.appointments) {
+                setAdminAppointments(data.appointments);
+            } else {
+                setAdminError(data.error || 'Failed to fetch appointments');
+                setAdminAppointments([]);
+            }
+        } catch (error: any) {
+            setAdminError(error.message || 'An error occurred while fetching appointments');
+            setAdminAppointments([]);
+        } finally {
+            setLoadingAdminData(false);
+        }
+    };
+
+    const fetchAdminMedicalRecords = async () => {
+        setLoadingAdminData(true);
+        setAdminError(null);
+        try {
+            const response = await fetch('http://localhost:5000/admin/medical_record');
+            const data = await response.json();
+            if (response.ok && data.medical_records) {
+                setAdminMedicalRecords(data.medical_records);
+            } else {
+                setAdminError(data.error || 'Failed to fetch medical records');
+                setAdminMedicalRecords([]);
+            }
+        } catch (error: any) {
+            setAdminError(error.message || 'An error occurred while fetching medical records');
+            setAdminMedicalRecords([]);
+        } finally {
+            setLoadingAdminData(false);
+        }
+    };
+
+    const fetchAdminDepartments = async () => {
+        setLoadingAdminData(true);
+        setAdminError(null);
+        try {
+            const response = await fetch('http://localhost:5000/admin/department');
+            const data = await response.json();
+            if (response.ok && data.departments) {
+                setAdminDepartments(data.departments);
+            } else {
+                setAdminError(data.error || 'Failed to fetch departments');
+                setAdminDepartments([]);
+            }
+        } catch (error: any) {
+            setAdminError(error.message || 'An error occurred while fetching departments');
+            setAdminDepartments([]);
+        } finally {
+            setLoadingAdminData(false);
+        }
+    };
+
+    const fetchAdminServices = async () => {
+        setLoadingAdminData(true);
+        setAdminError(null);
+        try {
+            const response = await fetch('http://localhost:5000/admin/service');
+            const data = await response.json();
+            if (response.ok && data.services) {
+                setAdminServices(data.services);
+            } else {
+                setAdminError(data.error || 'Failed to fetch services');
+                setAdminServices([]);
+            }
+        } catch (error: any) {
+            setAdminError(error.message || 'An error occurred while fetching services');
+            setAdminServices([]);
+        } finally {
+            setLoadingAdminData(false);
+        }
+    };
+
+    const fetchAdminUsers = async () => {
+        setLoadingAdminData(true);
+        setAdminError(null);
+        try {
+            const response = await fetch('http://localhost:5000/admin/user'); // Assuming an admin endpoint for users
+            const data = await response.json();
+            if (response.ok && data.users) {
+                setAdminUsers(data.users);
+            } else {
+                 // Fallback to admin_all_data if admin/user doesn't exist or return users
+                 console.warn('Admin /admin/user endpoint not found or did not return users, trying /admin/all_data');
+                 await fetchAdminAllData();
+                // After fetching all data, you might need to extract users if the structure is different
+                // For now, we'll rely on fetchAdminAllData populating adminAllData
+                // setAdminUsers(adminAllData?.users || []); // This won't work immediately due to async nature
+            }
+        } catch (error: any) {
+             console.error('Error fetching admin users:', error);
+             setAdminError(error.message || 'An error occurred while fetching users');
+             setAdminUsers([]);
+        } finally {
+            setLoadingAdminData(false);
+        }
+    };
+
+     const fetchAdminUserProfiles = async () => {
+        setLoadingAdminData(true);
+        setAdminError(null);
+        try {
+            const response = await fetch('http://localhost:5000/admin/user_profile'); // Assuming an admin endpoint for user profiles
+            const data = await response.json();
+            if (response.ok && data.user_profiles) {
+                setAdminUserProfiles(data.user_profiles);
+            } else {
+                 // Fallback to admin_all_data if admin/user_profile doesn't exist or return user_profiles
+                 console.warn('Admin /admin/user_profile endpoint not found or did not return user_profiles, trying /admin/all_data');
+                 await fetchAdminAllData();
+                 // setAdminUserProfiles(adminAllData?.user_profiles || []); // This won't work immediately
+            }
+        } catch (error: any) {
+             console.error('Error fetching admin user profiles:', error);
+             setAdminError(error.message || 'An error occurred while fetching user profiles');
+             setAdminUserProfiles([]);
+        } finally {
+            setLoadingAdminData(false);
+        }
+    };
+
+    const fetchAdminAllData = async () => {
+        setLoadingAdminData(true);
+        setAdminError(null);
+        try {
+            const response = await fetch('http://localhost:5000/admin/all_data');
+            const data = await response.json();
+            if (response.ok) {
+                setAdminAllData(data);
+                 // Optionally populate individual states if all_data returns nested structures
+                 if(data.doctors) setAdminDoctors(data.doctors);
+                 if(data.patients) setAdminPatients(data.patients);
+                 if(data.appointments) setAdminAppointments(data.appointments);
+                 if(data.medical_records) setAdminMedicalRecords(data.medical_records);
+                 if(data.departments) setAdminDepartments(data.departments);
+                 if(data.services) setAdminServices(data.services);
+                 // Assuming all_data might not return users or user_profiles directly, 
+                 // will rely on specific fetch calls or manual parsing if needed.
+            } else {
+                setAdminError(data.error || 'Failed to fetch all data');
+                setAdminAllData(null);
+            }
+        } catch (error: any) {
+            setAdminError(error.message || 'An error occurred while fetching all data');
+            setAdminAllData(null);
+        } finally {
+            setLoadingAdminData(false);
         }
     };
 
@@ -887,6 +915,7 @@ const App: React.FC = () => {
         setPassword('');
         setDoctorActiveMenuItem(null);
         setPatientActiveMenuItem(null);
+        setAdminActiveMenuItem(null);
         setDoctorProfile(null);
         setDoctorAppointments([]);
         setDoctorMedicalRecords([]);
@@ -906,6 +935,18 @@ const App: React.FC = () => {
          setEditPatientProfileFormData({});
          setEditPatientProfileMessage(null);
         setDepartments([]); // Clear departments on logout
+        // Clear admin states on logout
+        setAdminDoctors([]);
+        setAdminPatients([]);
+        setAdminAppointments([]);
+        setAdminMedicalRecords([]);
+        setAdminDepartments([]);
+        setAdminServices([]);
+        setAdminUsers([]);
+        setAdminUserProfiles([]);
+        setAdminAllData(null);
+        setLoadingAdminData(false);
+        setAdminError(null);
     };
 
     const handleNewAppointmentFormChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
@@ -979,6 +1020,273 @@ const App: React.FC = () => {
         }
     };
 
+    const renderAdminContent = () => {
+        if (loadingAdminData) return <p>Loading Admin Data...</p>;
+        if (adminError) return <p style={{ color: 'red' }}>Error: {adminError}</p>;
+
+        // Implement fetching and displaying data for each admin menu item here
+        switch (adminActiveMenuItem) {
+            case 'all_data':
+                return (
+                    <div>
+                        <h3>All Database Data</h3>
+                        <button onClick={fetchAdminAllData}>Refresh All Data</button>
+                        <pre>{JSON.stringify(adminAllData, null, 2)}</pre>
+                    </div>
+                );
+            case 'manage_doctors':
+                return (
+                    <div>
+                        <h3>Manage Doctors</h3>
+                         <button onClick={fetchAdminDoctors} style={{ marginRight: '10px' }}>Refresh Doctors</button>
+                         <button onClick={() => { setShowDoctorForm(true); setEditingDoctor(null); setDoctorFormData({}); setDoctorFormMessage(null); }}>Add New Doctor</button>
+                         {adminDoctors.length > 0 ? (
+                             <table style={{ borderCollapse: 'collapse', width: '100%', backgroundColor: '#fff' }}>
+                                 <thead>
+                                     <tr>
+                                         <th style={{ border: '1px solid #ddd', padding: '8px' }}>Doctor ID</th>
+                                         <th style={{ border: '1px solid #ddd', padding: '8px' }}>Name</th>
+                                         <th style={{ border: '1px solid #ddd', padding: '8px' }}>Specialization</th>
+                                         <th style={{ border: '1px solid #ddd', padding: '8px' }}>Department ID</th>
+                                         <th style={{ border: '1px solid #ddd', padding: '8px' }}>Actions</th>
+                                     </tr>
+                                 </thead>
+                                 <tbody>
+                                     {adminDoctors.map(doctor => (
+                                         <tr key={doctor.DoctorID}>
+                                             <td style={{ border: '1px solid #ddd', padding: '8px' }}>{doctor.DoctorID}</td>
+                                             <td style={{ border: '1px solid #ddd', padding: '8px' }}>{doctor.Name}</td>
+                                             <td style={{ border: '1px solid #ddd', padding: '8px' }}>{doctor.Specialization}</td>
+                                             <td style={{ border: '1px solid #ddd', padding: '8px' }}>{doctor.DepartmentID}</td>
+                                             <td style={{ border: '1px solid #ddd', padding: '8px' }}>
+                                                 <button onClick={() => { setEditingDoctor(doctor); setShowDoctorForm(true); setDoctorFormData(doctor); setDoctorFormMessage(null); }} style={{ marginRight: '5px' }}>Edit</button>
+                                                 <button onClick={() => { if (window.confirm(`Are you sure you want to delete doctor ${doctor.Name} (ID: ${doctor.DoctorID})?`)) deleteDoctor(doctor.DoctorID); }}>Delete</button>
+                                             </td>
+                                         </tr>
+                                     ))}
+                                 </tbody>
+                             </table>
+                         ) : (
+                             <p>No doctors found.</p>
+                         )}
+                         {/* Add/Edit Doctor Form */}
+                         {showDoctorForm && (
+                             <div style={{ marginTop: '20px', padding: '20px', border: '1px solid #ccc', borderRadius: '8px', backgroundColor: '#f9f9f9' }}>
+                                 <h4>{editingDoctor ? 'Edit Doctor' : 'Add New Doctor'}</h4>
+                                 {doctorFormMessage && <p style={{ color: doctorFormMessage.includes('Failed') ? 'red' : 'green' }}>{doctorFormMessage}</p>}
+                                 <div style={{ marginBottom: '10px' }}>
+                                     <label>Name:</label>
+                                     <input
+                                         type="text"
+                                         name="Name"
+                                         value={doctorFormData.Name || ''}
+                                         onChange={handleDoctorFormChange}
+                                         style={{ marginLeft: '10px' }}
+                                     />
+                                 </div>
+                                 <div style={{ marginBottom: '10px' }}>
+                                     <label>Department ID:</label>
+                                      {/* Consider replacing with a select dropdown populated from fetched departments */}
+                                     <input
+                                         type="number"
+                                         name="DepartmentID"
+                                         value={doctorFormData.DepartmentID || ''}
+                                         onChange={handleDoctorFormChange}
+                                         style={{ marginLeft: '10px' }}
+                                     />
+                                 </div>
+                                  {/* Specialization will be derived from Department ID on backend */}
+                                 <div style={{ marginTop: '15px' }}>
+                                     <button onClick={editingDoctor ? updateDoctor : createDoctor} style={{ marginRight: '10px' }}>{editingDoctor ? 'Save Changes' : 'Create Doctor'}</button>
+                                     <button onClick={() => setShowDoctorForm(false)}>Cancel</button>
+                                 </div>
+                             </div>
+                         )}
+                    </div>
+                );
+            case 'manage_patients':
+                 return (
+                     <div>
+                         <h3>Manage Patients</h3>
+                         <button onClick={fetchAdminPatients}>Refresh Patients</button>
+                         {adminPatients.length > 0 ? (
+                              <table style={{ borderCollapse: 'collapse', width: '100%', backgroundColor: '#fff' }}>
+                                 <thead>
+                                     <tr>
+                                         <th style={{ border: '1px solid #ddd', padding: '8px' }}>Patient ID</th>
+                                         <th style={{ border: '1px solid #ddd', padding: '8px' }}>Name</th>
+                                         <th style={{ border: '1px solid #ddd', padding: '8px' }}>DOB</th>
+                                         <th style={{ border: '1px solid #ddd', padding: '8px' }}>Gender</th>
+                                         <th style={{ border: '1px solid #ddd', padding: '8px' }}>Contact</th>
+                                     </tr>
+                                 </thead>
+                                 <tbody>
+                                     {adminPatients.map(patient => (
+                                         <tr key={patient.PatientID}>
+                                             <td style={{ border: '1px solid #ddd', padding: '8px' }}>{patient.PatientID}</td>
+                                             <td style={{ border: '1px solid #ddd', padding: '8px' }}>{patient.Name}</td>
+                                             <td style={{ border: '1px solid #ddd', padding: '8px' }}>{patient.DOB}</td>
+                                             <td style={{ border: '1px solid #ddd', padding: '8px' }}>{patient.Gender}</td>
+                                             <td style={{ border: '1px solid #ddd', padding: '8px' }}>{patient.Contact}</td>
+                                         </tr>
+                                     ))}
+                                 </tbody>
+                             </table>
+                         ) : (
+                             <p>No patients found.</p>
+                         )}
+                     </div>
+                 );
+             case 'manage_appointments':
+                 return (
+                     <div>
+                         <h3>Manage Appointments</h3>
+                         <button onClick={fetchAdminAppointments}>Refresh Appointments</button>
+                         {adminAppointments.length > 0 ? (
+                              <table style={{ borderCollapse: 'collapse', width: '100%', backgroundColor: '#fff' }}>
+                                 <thead>
+                                     <tr>
+                                         <th style={{ border: '1px solid #ddd', padding: '8px' }}>Appointment ID</th>
+                                         <th style={{ border: '1px solid #ddd', padding: '8px' }}>Patient ID</th>
+                                         <th style={{ border: '1px solid #ddd', padding: '8px' }}>Doctor ID</th>
+                                         <th style={{ border: '1px solid #ddd', padding: '8px' }}>Date/Time</th>
+                                         <th style={{ border: '1px solid #ddd', padding: '8px' }}>Status</th>
+                                     </tr>
+                                 </thead>
+                                 <tbody>
+                                     {adminAppointments.map(appointment => (
+                                         <tr key={appointment.AppointmentID}>
+                                             <td style={{ border: '1px solid #ddd', padding: '8px' }}>{appointment.AppointmentID}</td>
+                                             <td style={{ border: '1px solid #ddd', padding: '8px' }}>{appointment.PatientID}</td>
+                                             <td style={{ border: '1px solid #ddd', padding: '8px' }}>{appointment.DoctorID}</td>
+                                             <td style={{ border: '1px solid #ddd', padding: '8px' }}>{appointment.DateTime}</td>
+                                             <td style={{ border: '1px solid #ddd', padding: '8px' }}>{appointment.Status}</td>
+                                         </tr>
+                                     ))}
+                                 </tbody>
+                             </table>
+                         ) : (
+                             <p>No appointments found.</p>
+                         )}
+                     </div>
+                 );
+             case 'manage_medical_records':
+                 return (
+                     <div>
+                         <h3>Manage Medical Records</h3>
+                         <button onClick={fetchAdminMedicalRecords}>Refresh Medical Records</button>
+                         {adminMedicalRecords.length > 0 ? (
+                              <table style={{ borderCollapse: 'collapse', width: '100%', backgroundColor: '#fff' }}>
+                                 <thead>
+                                     <tr>
+                                         <th style={{ border: '1px solid #ddd', padding: '8px' }}>Record ID</th>
+                                         <th style={{ border: '1px solid #ddd', padding: '8px' }}>Appointment ID</th>
+                                         <th style={{ border: '1px solid #ddd', padding: '8px' }}>Diagnosis</th>
+                                         <th style={{ border: '1px solid #ddd', padding: '8px' }}>Treatment</th>
+                                         <th style={{ border: '1px solid #ddd', padding: '8px' }}>Notes</th>
+                                         <th style={{ border: '1px solid #ddd', padding: '8px' }}>Record Date</th>
+                                     </tr>
+                                 </thead>
+                                 <tbody>
+                                     {adminMedicalRecords.map(record => (
+                                         <tr key={record.RecordID}>
+                                             <td style={{ border: '1px solid #ddd', padding: '8px' }}>{record.RecordID}</td>
+                                             <td style={{ border: '1px solid #ddd', padding: '8px' }}>{record.AppointmentID}</td>
+                                             <td style={{ border: '1px solid #ddd', padding: '8px' }}>{record.Diagnosis}</td>
+                                             <td style={{ border: '1px solid #ddd', padding: '8px' }}>{record.Treatment}</td>
+                                             <td style={{ border: '1px solid #ddd', padding: '8px' }}>{record.Notes}</td>
+                                             <td style={{ border: '1px solid #ddd', padding: '8px' }}>{record.RecordDate}</td>
+                                         </tr>
+                                     ))}
+                                 </tbody>
+                             </table>
+                         ) : (
+                             <p>No medical records found.</p>
+                         )}
+                     </div>
+                 );
+             case 'manage_departments':
+                 return (
+                     <div>
+                         <h3>Manage Departments</h3>
+                         <button onClick={fetchAdminDepartments}>Refresh Departments</button>
+                         {adminDepartments.length > 0 ? (
+                              <table style={{ borderCollapse: 'collapse', width: '100%', backgroundColor: '#fff' }}>
+                                 <thead>
+                                     <tr>
+                                         <th style={{ border: '1px solid #ddd', padding: '8px' }}>Department ID</th>
+                                         <th style={{ border: '1px solid #ddd', padding: '8px' }}>Name</th>
+                                     </tr>
+                                 </thead>
+                                 <tbody>
+                                     {adminDepartments.map(department => (
+                                         <tr key={department.DepartmentID}>
+                                             <td style={{ border: '1px solid #ddd', padding: '8px' }}>{department.DepartmentID}</td>
+                                             <td style={{ border: '1px solid #ddd', padding: '8px' }}>{department.Name}</td>
+                                         </tr>
+                                     ))}
+                                 </tbody>
+                             </table>
+                         ) : (
+                             <p>No departments found.</p>
+                         )}
+                     </div>
+                 );
+             case 'manage_services':
+                 return (
+                     <div>
+                         <h3>Manage Services</h3>
+                         <button onClick={fetchAdminServices}>Refresh Services</button>
+                         {adminServices.length > 0 ? (
+                              <table style={{ borderCollapse: 'collapse', width: '100%', backgroundColor: '#fff' }}>
+                                 <thead>
+                                     <tr>
+                                         <th style={{ border: '1px solid #ddd', padding: '8px' }}>Service ID</th>
+                                         <th style={{ border: '1px solid #ddd', padding: '8px' }}>Name</th>
+                                         <th style={{ border: '1px solid #ddd', padding: '8px' }}>Cost</th>
+                                     </tr>
+                                 </thead>
+                                 <tbody>
+                                     {adminServices.map(service => (
+                                         <tr key={service.ServiceID}>
+                                             <td style={{ border: '1px solid #ddd', padding: '8px' }}>{service.ServiceID}</td>
+                                             <td style={{ border: '1px solid #ddd', padding: '8px' }}>{service.Name}</td>
+                                             <td style={{ border: '1px solid #ddd', padding: '8px' }}>{service.Cost}</td>
+                                         </tr>
+                                     ))}
+                                 </tbody>
+                             </table>
+                         ) : (
+                             <p>No services found.</p>
+                         )}
+                     </div>
+                 );
+             case 'change_password':
+                 return (
+                     <div>
+                         <h3>Change Password</h3>
+                         {changePasswordMessage && <p style={{ color: changePasswordMessage.includes('Failed') ? 'red' : 'green' }}>{changePasswordMessage}</p>}
+                         <div style={{ marginBottom: '10px' }}>
+                             <label>Old Password:</label>
+                             <input type="password" value={oldPassword} onChange={e => setOldPassword(e.target.value)} style={{ marginLeft: '10px' }} />
+                         </div>
+                         <div style={{ marginBottom: '10px' }}>
+                             <label>New Password:</label>
+                             <input type="password" value={newPassword} onChange={e => setNewPassword(e.target.value)} style={{ marginLeft: '10px' }} />
+                         </div>
+                         <div style={{ marginBottom: '10px' }}>
+                             <label>Confirm New Password:</label>
+                             <input type="password" value={confirmNewPassword} onChange={e => setConfirmNewPassword(e.target.value)} style={{ marginLeft: '10px' }} />
+                         </div>
+                         <button onClick={handleChangePassword} style={{ padding: '8px 15px', marginRight: '10px' }}>Confirm Change</button>
+                         <button onClick={() => setShowChangePasswordForm(false)} style={{ padding: '8px 15px' }}>Cancel</button>
+                     </div>
+                 );
+             default:
+                 return <div>Select a menu item</div>;
+         }
+    };
+
     const renderDoctorContent = () => {
         if (loadingDoctorData) return <p>Loading...</p>;
         if (doctorError) return <p style={{ color: 'red' }}>Error: {doctorError}</p>;
@@ -986,13 +1294,14 @@ const App: React.FC = () => {
         // Troubleshooting: testing if edits can be applied here
         switch (doctorActiveMenuItem) {
             case 'profile':
-                return (
-                    <div>
+    return (
+                <div>
                         <h3>Doctor Profile</h3>
                         {doctorProfile ? (
                             <div>
                                 <p><strong>Name:</strong> {doctorProfile.Name}</p>
                                 <p><strong>Department:</strong> {departments.find(dept => dept.DepartmentID === doctorProfile.DepartmentID)?.Name || 'N/A'}</p>
+                                <p><strong>Specialization:</strong> {doctorProfile.Specialization}</p>
                             </div>
                         ) : (
                             <p>No profile data available.</p>
@@ -1703,6 +2012,117 @@ const App: React.FC = () => {
 
     const displayFullName = userInfo?.Role === 'Doctor' && doctorProfile?.Name ? doctorProfile.Name : userInfo?.Username;
     const displayPatientFullName = userInfo?.Role === 'Patient' && patientProfile?.Name ? patientProfile.Name : userInfo?.Username;
+    const displayAdminName = userInfo?.Username; // Admins might not have a specific profile name like doctors/patients
+
+    // Admin Doctor Management handlers and functions
+    const handleDoctorFormChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
+        setDoctorFormData({
+            ...doctorFormData,
+            [e.target.name]: e.target.value
+        });
+    };
+
+    const createDoctor = async () => {
+        if (!doctorFormData.Name || !doctorFormData.DepartmentID) {
+            setDoctorFormMessage('Name and Department ID are required.');
+            return;
+        }
+        setLoadingAdminData(true);
+        setAdminError(null);
+        setDoctorFormMessage(null);
+        try {
+            const response = await fetch('http://localhost:5000/admin/doctor', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    name: doctorFormData.Name,
+                    specialization: '', // Specialization derived from Department ID on backend
+                    department_id: doctorFormData.DepartmentID
+                })
+            });
+            const data = await response.json();
+            if (response.ok) {
+                setDoctorFormMessage(data.message || 'Doctor created successfully!');
+                fetchAdminDoctors(); // Refresh list
+                setShowDoctorForm(false); // Hide form
+                setDoctorFormData({}); // Clear form
+                setEditingDoctor(null);
+            } else {
+                setDoctorFormMessage(data.error || 'Failed to create doctor');
+                setAdminError(data.error || 'Failed to create doctor');
+            }
+        } catch (error: any) {
+            setDoctorFormMessage(error.message || 'An error occurred while creating doctor');
+            setAdminError(error.message || 'An error occurred while creating doctor');
+        } finally {
+            setLoadingAdminData(false);
+        }
+    };
+
+    const updateDoctor = async () => {
+        if (!editingDoctor?.DoctorID || !doctorFormData.Name || !doctorFormData.DepartmentID) {
+            setDoctorFormMessage('Doctor ID, Name, and Department ID are required for update.');
+            return;
+        }
+         setLoadingAdminData(true);
+         setAdminError(null);
+         setDoctorFormMessage(null);
+        try {
+            // Assuming PUT endpoint for admin doctor update exists
+            const response = await fetch('http://localhost:5000/admin/doctor', { // Adjust endpoint if different
+                method: 'PUT', // Assuming PUT for update
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    doctor_id: editingDoctor.DoctorID,
+                    new_name: doctorFormData.Name,
+                    new_spec: '', // Specialization derived from Department ID on backend
+                    new_dept: doctorFormData.DepartmentID
+                })
+            });
+            const data = await response.json();
+            if (response.ok) {
+                setDoctorFormMessage(data.message || 'Doctor updated successfully!');
+                fetchAdminDoctors(); // Refresh list
+                setShowDoctorForm(false); // Hide form
+                setDoctorFormData({}); // Clear form
+                setEditingDoctor(null);
+            } else {
+                setDoctorFormMessage(data.error || 'Failed to update doctor');
+                setAdminError(data.error || 'Failed to update doctor');
+            }
+        } catch (error: any) {
+            setDoctorFormMessage(error.message || 'An error occurred while updating doctor');
+            setAdminError(error.message || 'An error occurred while updating doctor');
+        } finally {
+            setLoadingAdminData(false);
+        }
+    };
+
+    const deleteDoctor = async (doctor_id: number) => {
+         setLoadingAdminData(true);
+         setAdminError(null);
+         setDoctorFormMessage(null);
+        try {
+            const response = await fetch('http://localhost:5000/admin/doctor', {
+                method: 'DELETE',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ doctor_id: doctor_id })
+            });
+            const data = await response.json();
+            if (response.ok) {
+                setDoctorFormMessage(data.message || 'Doctor deleted successfully!');
+                fetchAdminDoctors(); // Refresh list
+            } else {
+                setDoctorFormMessage(data.error || 'Failed to delete doctor');
+                setAdminError(data.error || 'Failed to delete doctor');
+            }
+        } catch (error: any) {
+             setDoctorFormMessage(error.message || 'An error occurred while deleting doctor');
+             setAdminError(error.message || 'An error occurred while deleting doctor');
+        } finally {
+            setLoadingAdminData(false);
+        }
+    };
 
     return (
         <div style={{
@@ -1962,6 +2382,134 @@ const App: React.FC = () => {
                         </div>
                     )}
 
+                    {/* Sidebar for Admin */}
+                    {userInfo.Role === 'Admin' && (
+                        <div style={{
+                            width: '225px',
+                            borderRight: '1px solid #ccc',
+                            paddingRight: '20px',
+                            flexShrink: 0,
+                            display: 'flex',
+                            flexDirection: 'column',
+                            justifyContent: 'flex-start',
+                            overflowY: 'auto',
+                            paddingTop: '20px'
+                        }}>
+                            {/* Admin Logo and Menu */}
+                             <div style={{flexGrow: 1}}> {/* Wrap logo and menu in a div to push logout down */}
+                                 {/* Replace with actual admin logo if available */}
+                                  <h3 style={{ textAlign: 'center', marginBottom: '20px' }}>Admin Menu</h3>
+                                  <ul style={{
+                                     listStyle: 'none',
+                                     padding: 0,
+                                      marginBottom: '20px' // Add margin below the list
+                                 }}>
+                                    <li style={{
+                                        marginBottom: '10px',
+                                        cursor: 'pointer',
+                                        fontWeight: adminActiveMenuItem === 'all_data' ? 'bold' : 'normal',
+                                        padding: '8px',
+                                        border: '1px solid #ccc',
+                                        borderRadius: '5px',
+                                        backgroundColor: adminActiveMenuItem === 'all_data' ? '#e0e0e0' : '#f9f9f9',
+                                        transition: 'background-color 0.3s ease'
+                                    }} onClick={() => setAdminActiveMenuItem('all_data')}>View All Data</li>
+                                     <li style={{
+                                         marginBottom: '10px',
+                                         cursor: 'pointer',
+                                         fontWeight: adminActiveMenuItem === 'manage_doctors' ? 'bold' : 'normal',
+                                         padding: '8px',
+                                         border: '1px solid #ccc',
+                                         borderRadius: '5px',
+                                         backgroundColor: adminActiveMenuItem === 'manage_doctors' ? '#e0e0e0' : '#f9f9f9',
+                                         transition: 'background-color 0.3s ease'
+                                     }} onClick={() => setAdminActiveMenuItem('manage_doctors')}>Manage Doctors</li>
+                                      <li style={{
+                                          marginBottom: '10px',
+                                          cursor: 'pointer',
+                                          fontWeight: adminActiveMenuItem === 'manage_patients' ? 'bold' : 'normal',
+                                          padding: '8px',
+                                          border: '1px solid #ccc',
+                                          borderRadius: '5px',
+                                          backgroundColor: adminActiveMenuItem === 'manage_patients' ? '#e0e0e0' : '#f9f9f9',
+                                          transition: 'background-color 0.3s ease'
+                                      }} onClick={() => setAdminActiveMenuItem('manage_patients')}>Manage Patients</li>
+                                      <li style={{
+                                          marginBottom: '10px',
+                                          cursor: 'pointer',
+                                          fontWeight: adminActiveMenuItem === 'manage_appointments' ? 'bold' : 'normal',
+                                          padding: '8px',
+                                          border: '1px solid #ccc',
+                                          borderRadius: '5px',
+                                          backgroundColor: adminActiveMenuItem === 'manage_appointments' ? '#e0e0e0' : '#f9f9f9',
+                                          transition: 'background-color 0.3s ease'
+                                      }} onClick={() => setAdminActiveMenuItem('manage_appointments')}>Manage Appointments</li>
+                                      <li style={{
+                                          marginBottom: '10px',
+                                          cursor: 'pointer',
+                                          fontWeight: adminActiveMenuItem === 'manage_medical_records' ? 'bold' : 'normal',
+                                          padding: '8px',
+                                          border: '1px solid #ccc',
+                                          borderRadius: '5px',
+                                          backgroundColor: adminActiveMenuItem === 'manage_medical_records' ? '#e0e0e0' : '#f9f9f9',
+                                          transition: 'background-color 0.3s ease'
+                                      }} onClick={() => setAdminActiveMenuItem('manage_medical_records')}>Manage Medical Records</li>
+                                      <li style={{
+                                           marginBottom: '10px',
+                                           cursor: 'pointer',
+                                           fontWeight: adminActiveMenuItem === 'manage_departments' ? 'bold' : 'normal',
+                                           padding: '8px',
+                                           border: '1px solid #ccc',
+                                           borderRadius: '5px',
+                                           backgroundColor: adminActiveMenuItem === 'manage_departments' ? '#e0e0e0' : '#f9f9f9',
+                                           transition: 'background-color 0.3s ease'
+                                       }} onClick={() => setAdminActiveMenuItem('manage_departments')}>Manage Departments</li>
+                                       <li style={{
+                                            marginBottom: '10px',
+                                            cursor: 'pointer',
+                                            fontWeight: adminActiveMenuItem === 'manage_services' ? 'bold' : 'normal',
+                                            padding: '8px',
+                                            border: '1px solid #ccc',
+                                            borderRadius: '5px',
+                                            backgroundColor: adminActiveMenuItem === 'manage_services' ? '#e0e0e0' : '#f9f9f9',
+                                            transition: 'background-color 0.3s ease'
+                                        }} onClick={() => setAdminActiveMenuItem('manage_services')}>Manage Services</li>
+                                        <li style={{
+                                             marginBottom: '10px',
+                                             cursor: 'pointer',
+                                             fontWeight: adminActiveMenuItem === 'change_password' ? 'bold' : 'normal',
+                                             padding: '8px',
+                                             border: '1px solid #ccc',
+                                             borderRadius: '5px',
+                                             backgroundColor: adminActiveMenuItem === 'change_password' ? '#e0e0e0' : '#f9f9f9',
+                                             transition: 'background-color 0.3s ease'
+                                         }} onClick={() => { setAdminActiveMenuItem('change_password'); setShowChangePasswordForm(true); }}>Change Password</li>
+                                 </ul>
+                              </div>
+
+                            {/* Logout Button and Username (Admin) */}
+                            <div style={{
+                                 display: 'flex',
+                                 alignItems: 'center',
+                                 marginTop: '20px',
+                                 paddingTop: '20px',
+                                 borderTop: '1px solid #eee',
+                                 justifyContent: 'flex-start'
+                             }}>
+                                 <span style={{ marginRight: '10px' }}>Logged in as: <strong>{displayAdminName}</strong></span>
+                                <button onClick={logout} style={{
+                                     padding: '8px',
+                                     border: '1px solid #ccc',
+                                     borderRadius: '5px',
+                                     backgroundColor: '#f9f9f9',
+                                     transition: 'background-color 0.3s ease',
+                                     cursor: 'pointer',
+                                     fontSize: '0.9em'
+                                 }}>Logout</button>
+                             </div>
+                        </div>
+                    )}
+
                     {/* Main Content */}
                     <div style={{
                         flexGrow: 1,
@@ -1969,11 +2517,12 @@ const App: React.FC = () => {
                         backgroundColor: '#f0f0f0',
                         borderRadius: '10px',
                         boxShadow: 'inset 5px 5px 10px #bebebe, inset -5px -5px 10px #ffffff',
-                        marginLeft: userInfo?.Role === 'Doctor' || userInfo?.Role === 'Patient' ? '20px' : '0' // Add a gap if sidebar is present
+                        marginLeft: userInfo?.Role !== 'login' ? '20px' : '0' // Add a gap if sidebar is present for any role
                     }}>
                          <h2>Welcome, {userInfo?.Role === 'Patient' ? displayPatientFullName : displayFullName} ({userInfo?.Role})</h2>
                         {userInfo?.Role === 'Doctor' && renderDoctorContent()}
                          {userInfo?.Role === 'Patient' && renderPatientContent()}
+                         {userInfo?.Role === 'Admin' && renderAdminContent()}
                           {/* Other roles' content would go here */}
 
                     </div>

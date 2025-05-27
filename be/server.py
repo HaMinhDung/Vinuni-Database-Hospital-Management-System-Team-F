@@ -384,6 +384,33 @@ def admin_get_doctor(doctor_id):
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
+# Admin update doctor
+@app.route('/admin/doctor', methods=['PUT'])
+def admin_update_doctor_endpoint():
+    data = request.get_json()
+    if not data or 'doctor_id' not in data:
+        return jsonify({'error': 'Missing doctor_id in request data'}), 400
+
+    doctor_id = data['doctor_id']
+    new_name = data.get('new_name')
+    new_spec = data.get('new_specialization') # Assuming specialization is sent explicitly now
+    new_dept = data.get('new_department_id')
+
+    # Check if at least one field to update is provided
+    if not any([new_name, new_spec, new_dept]):
+         return jsonify({'message': 'No update data provided.'}), 200 # Or 400 depending on desired behavior
+
+    try:
+        admin.admin_update_doctor(
+            int(doctor_id),
+            new_name,
+            new_spec,
+            new_dept # Pass department_id as is, the model function handles int conversion if needed
+        )
+        return jsonify({'message': 'Doctor profile updated successfully'})
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
 ##############################################
 # Các endpoint cho Bệnh nhân
 ##############################################

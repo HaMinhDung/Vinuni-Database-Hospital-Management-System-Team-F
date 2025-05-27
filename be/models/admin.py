@@ -86,6 +86,37 @@ def admin_delete_doctor(doctor_id):
     conn.close()
     print("Doctor deleted with ID:", doctor_id)
 
+# Admin update doctor
+def admin_update_doctor(doctor_id, name=None, specialization=None, department_id=None):
+    conn = get_connection()
+    cursor = conn.cursor()
+    updates = []
+    params = []
+    if name is not None:
+        updates.append("Name = %s")
+        params.append(name)
+    if specialization is not None:
+        updates.append("Specialization = %s")
+        params.append(specialization)
+    if department_id is not None:
+        updates.append("DepartmentID = %s")
+        params.append(department_id)
+
+    if not updates:
+        print("No fields to update for doctor ID:", doctor_id)
+        cursor.close()
+        conn.close()
+        return
+
+    sql = f"UPDATE Doctor SET {', '.join(updates)} WHERE DoctorID = %s"
+    params.append(doctor_id)
+
+    cursor.execute(sql, tuple(params))
+    conn.commit()
+    cursor.close()
+    conn.close()
+    print("Doctor updated with ID:", doctor_id)
+
 # Appointments
 def admin_get_all_appointments():
     conn = get_connection()
