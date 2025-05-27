@@ -58,7 +58,7 @@ def create_patient_account():
     gender = input("Gender: ").strip()
     contact = input("Contact: ").strip()
     
-    user_id = create_user(username, password)
+    user_id = create_user(username, password) # Pass plain password string
     patient_id = create_patient_record(name, dob, gender, contact)
     create_user_profile_entry(user_id, patient_id)
     print("Patient account created successfully.")

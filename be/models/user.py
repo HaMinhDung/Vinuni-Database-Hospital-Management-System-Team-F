@@ -1,7 +1,7 @@
 from db.connection import get_connection
 import bcrypt
 
-def create_user(username, password_hash, role):
+def create_user(username, password, role):
     conn = get_connection()
     cursor = conn.cursor()
     # Kiểm tra xem username đã tồn tại hay chưa
@@ -12,8 +12,10 @@ def create_user(username, password_hash, role):
         print("Username is already in use. Please choose another username.")
         user_id = None # Indicate failure to create user
     else:
+        # Hash the password before storing
+        hashed_password = bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
         sql = "INSERT INTO User (Username, PasswordHash, Role) VALUES (%s, %s, %s)"
-        cursor.execute(sql, (username, password_hash, role))
+        cursor.execute(sql, (username, hashed_password, role))
         conn.commit()
         user_id = cursor.lastrowid
         print("User created.")

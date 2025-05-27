@@ -1268,19 +1268,26 @@ const App: React.FC = () => {
                                         <th style={{ border: '1px solid #ddd', padding: '8px' }}>Diagnosis</th>
                                         <th style={{ border: '1px solid #ddd', padding: '8px' }}>Treatment</th>
                                         <th style={{ border: '1px solid #ddd', padding: '8px' }}>Notes</th>
+                                        <th style={{ border: '1px solid #ddd', padding: '8px' }}>Action</th>
                                     </tr>
                                 </thead>
                                 <tbody>
                                     {showNewMedicalRecordRow && (
                                         <tr style={{ backgroundColor: '#e9e9e9' }}>
-                                            <td>
-                                                 <input
-                                                     type="number"
-                                                     name="appointment_id"
-                                                     value={newMedicalRecordFormData.appointment_id}
-                                                     onChange={handleNewMedicalRecordFormChange}
-                                                     style={{ width: '100%', padding: '5px' }}
-                                                  />
+                                            <td style={{ border: '1px solid #ddd', padding: '8px' }}> {/* Appointment ID select */}
+                                                <select
+                                                    name="appointment_id"
+                                                    value={newMedicalRecordFormData.appointment_id}
+                                                    onChange={handleNewMedicalRecordFormChange as any} // Cast to any due to event type difference
+                                                    style={{ width: '100%', padding: '5px' }}
+                                                >
+                                                    <option value="">Select Appointment</option>
+                                                    {doctorAppointments.map(appointment => (
+                                                        <option key={appointment.AppointmentID} value={appointment.AppointmentID}>
+                                                            {`ID: ${appointment.AppointmentID} - Patient: ${appointment.PatientName || 'N/A'} - Date: ${appointment.DateTime}`}
+                                                        </option>
+                                                    ))}
+                                                </select>
                                             </td>
                                             <td></td> {/* Placeholder for Patient Name in new row */}
                                             <td>
@@ -1309,6 +1316,10 @@ const App: React.FC = () => {
                                                     onChange={handleNewMedicalRecordFormChange}
                                                     style={{ width: '100%', padding: '5px' }}
                                                  />
+                                            </td>
+                                            <td style={{ border: '1px solid #ddd', padding: '8px' }}> {/* Action buttons */}
+                                                <button onClick={createMedicalRecord} style={{ padding: '8px', border: '1px solid #ccc', borderRadius: '5px', backgroundColor: '#f9f9f9', transition: 'background-color 0.3s ease', cursor: 'pointer', fontSize: '0.9em', marginRight: '10px' }}>Confirm</button>
+                                                <button onClick={() => setShowNewMedicalRecordRow(false)} style={{ padding: '8px', border: '1px solid #ccc', borderRadius: '5px', backgroundColor: '#f9f9f9', transition: 'background-color 0.3s ease', cursor: 'pointer', fontSize: '0.9em' }}>Cancel</button>
                                             </td>
                                         </tr>
                                     )}

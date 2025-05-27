@@ -95,7 +95,7 @@ def manage_doctor():
             password = name.replace(' ', '').lower() # Simple default password (insecure)
 
             # Create user account
-            user_id = user.create_user(username, password, "Doctor")
+            user_id = user.create_user(username, password, "Doctor") # Pass plain password string
             
             if user_id is not None:
                 # Create doctor record
@@ -169,7 +169,7 @@ def manage_patient():
             password = name.replace(' ', '').lower() # Simple default password (insecure)
 
             # Create user account
-            user_id = user.create_user(username, password, "Patient")
+            user_id = user.create_user(username, password, "Patient") # Pass plain password string
 
             if user_id is not None:
                 # Create patient record
@@ -380,7 +380,7 @@ def manage_user():
                     break
             password_hash = input("Password hash: ")
             role = input("Role: ")
-            user.create_user(username, password_hash, role)
+            user.create_user(username, password_hash, role) # Pass plain password string
         elif choice == '2':
             users = user.read_users()
             if users:
