@@ -1,0 +1,71 @@
+Test Case ID,Module,Description,Input,Expected Output,Actual Result,Status
+TC_01,Auth,User sign up with valid info,"username, password, role: patient",Account created,Success,Pass
+TC_02,Auth,User login with valid credentials,"username, password",Redirect to dashboard,Success,Pass
+TC_03,Patient,View own profile,patient_id,Profile data displayed,Success,Pass
+TC_04,Patient,Edit own profile,"form data (name, dob, gender)",Profile updated,Success,Pass
+TC_05,Patient,View appointments,patient_id,List of appointments,Success,Pass
+TC_06,Patient,View own medical records,patient_id,Medical records displayed,Success,Pass
+TC_07,Patient,View doctors,none,List of doctors,Success,Pass
+TC_08,Doctor,View own profile,doctor_id,Profile data displayed,Success,Pass
+TC_09,Doctor,Edit own profile,form data,Profile updated,Success,Pass
+TC_10,Doctor,View own appointments,doctor_id,List of appointments,Success,Pass
+TC_11,Doctor,View medical records for own patients,doctor_id,Filtered records displayed,Success,Pass
+TC_12,Doctor,Update appointment status,"appointment_id, status",Appointment updated,Success,Pass
+TC_13,Admin,View all doctors,none,List of doctors,Success,Pass
+TC_14,Admin,Edit doctor info,"doctor_id, form data",Doctor updated,Success,Pass
+TC_15,Admin,Delete doctor,doctor_id,Doctor removed,Success,Pass
+TC_16,Admin,View all users,none,List of users,Success,Pass
+TC_17,Admin,Edit user,"user_id, form data",User updated,Success,Pass
+TC_18,Admin,Delete user,user_id,User removed,Success,Pass
+TC_19,Admin,Manage patients (view/edit/delete),patient_id,Patient updated/removed,Success,Pass
+TC_20,Admin,Manage user profiles,profile_id,Profile updated/removed,Success,Pass
+TC_21,Admin,Manage departments,department_id,Department updated/removed,Success,Pass
+TC_22,Admin,Manage medical records,record_id,Record updated/removed,Success,Pass
+TC_23,Admin,Manage appointments,appointment_id,Appointment updated/removed,Success,Pass
+TC_24,Patient,Search doctors by department,department_id,Filtered doctor list,Success,Pass
+TC_25,Patient,View upcoming appointments only,patient_id,Upcoming appointments,Success,Pass
+TC_26,Patient,Cancel own appointment,appointment_id,Appointment marked as canceled,Success,Pass
+TC_27,Patient,Change password,"old_pw, new_pw",Password updated,Success,Pass
+TC_28,Doctor,Search patients by name,name,Filtered patient list,Success,Pass
+TC_29,Doctor,Add medical record for patient,record details,Record created,Success,Pass
+TC_30,Doctor,Edit existing medical record,"record_id, new info",Record updated,Success,Pass
+TC_31,Doctor,View patient appointment history,patient_id,Appointment list,Success,Pass
+TC_32,Doctor,Filter appointments by date,date,Filtered list,Success,Pass
+TC_33,Admin,Add new doctor,doctor info,Doctor created,Success,Pass
+TC_34,Admin,Add new department,department name,Department added,Success,Pass
+TC_35,Admin,Update user role,"user_id, role",Role updated,Success,Pass
+TC_36,Admin,Reset user password,user_id,Temporary password set,Success,Pass
+TC_37,Admin,Filter patients by age,age range,Filtered patient list,Success,Pass
+TC_38,Admin,Filter doctors by department,department_id,Filtered doctor list,Success,Pass
+TC_39,Admin,Export user data to CSV,none,CSV generated,Success,Pass
+TC_40,Admin,Deactivate user,user_id,User status set to inactive,Success,Pass
+TC_41,Admin,Reactivate user,user_id,User status set to active,Success,Pass
+TC_42,Admin,Delete medical record,record_id,Record removed,Success,Pass
+TC_43,Shared,Invalid login attempt,wrong username/password,Login failed message,Success,Pass
+TC_44,Shared,Session timeout after inactivity,wait 30 mins,Auto logout,Success,Pass
+TC_45,Shared,Access control enforcement,user tries forbidden action,403 error,Success,Pass
+TC_46,Shared,User logout,click logout,Session ended,Success,Pass
+TC_47,Shared,Homepage displays correct role view,based on role,Correct dashboard loaded,Success,Pass
+TC_48,Shared,Form validation errors,empty fields,Validation warning shown,Success,Pass
+TC_49,Shared,Responsive layout on mobile,resize window,Layout adapts,Success,Pass
+TC_50,Shared,Access public routes without login,unauthenticated visit,Redirect to login,Success,Pass
+TC_51,Patient,View doctor profile,doctor_id,Doctor profile displayed,Success,Pass
+TC_52,Patient,Change email address,new email,Email updated,Success,Pass
+TC_53,Patient,Download medical record,record_id,PDF downloaded,Success,Pass
+TC_54,Patient,Submit feedback for appointment,"appointment_id, feedback",Feedback saved,Success,Pass
+TC_55,Doctor,Update medical record diagnosis,"record_id, diagnosis",Diagnosis updated,Success,Pass
+TC_56,Doctor,Mark appointment as completed,appointment_id,Status changed,Success,Pass
+TC_57,Doctor,Search appointments by patient,patient_id,Filtered list,Success,Pass
+TC_58,Doctor,Export patient data,patient_id,CSV downloaded,Success,Pass
+TC_59,Admin,Add user profile manually,"user_id, profile info",Profile created,Success,Pass
+TC_60,Admin,Edit appointment time,"appointment_id, new time",Time updated,Success,Pass
+TC_61,Admin,Reset all data,admin auth,Database reset,Success,Pass
+TC_62,Admin,Create backup of DB,none,Backup file created,Success,Pass
+TC_63,Admin,Generate report of all doctors,none,Report displayed,Success,Pass
+TC_64,Admin,Lock user account,user_id,User access restricted,Success,Pass
+TC_65,Admin,Assign department to doctor,"doctor_id, department",Assignment confirmed,Success,Pass
+TC_66,Admin,Archive patient record,record_id,Status set to archived,Success,Pass
+TC_67,Shared,Attempt to access deleted data,invalid ID,Error displayed,Success,Pass
+TC_68,Shared,Concurrent data access,2 users edit same item,Conflict warning,Success,Pass
+TC_69,Shared,Notification display on success,any form submit,Toast message shown,Success,Pass
+TC_70,Shared,Dark mode toggle,user toggles theme,Theme changed,Success,Pass
