@@ -1071,6 +1071,7 @@ const App: React.FC = () => {
                                                     style={{ width: '100%', padding: '5px' }}
                                                 />
                                             </td>
+                                            <td style={{ border: '1px solid #ddd', padding: '8px' }}>{newAppointmentPatientName || ''}</td> {/* Placeholder for fetched Patient Name */}
                                             <td>
                                                 <input
                                                     type="datetime-local"
@@ -1092,6 +1093,10 @@ const App: React.FC = () => {
                                                      <option value="Completed">Completed</option>
                                                      <option value="Cancelled">Cancelled</option>
                                                  </select>
+                                            </td>
+                                            <td style={{ border: '1px solid #ddd', padding: '8px' }}> {/* Empty cell for Actions column */}
+                                                <button onClick={createDoctorAppointment} style={{ padding: '8px', border: '1px solid #ccc', borderRadius: '5px', backgroundColor: '#f9f9f9', transition: 'background-color 0.3s ease', cursor: 'pointer', fontSize: '0.9em', marginRight: '10px' }}>Confirm</button>
+                                                <button onClick={() => setShowNewAppointmentRow(false)} style={{ padding: '8px', border: '1px solid #ccc', borderRadius: '5px', backgroundColor: '#f9f9f9', transition: 'background-color 0.3s ease', cursor: 'pointer', fontSize: '0.9em' }}>Cancel</button>
                                             </td>
                                         </tr>
                                     )}
@@ -1155,12 +1160,6 @@ const App: React.FC = () => {
                             </table>
                         ) : (
                             <p>No appointments found.</p>
-                        )}
-                        {showNewAppointmentRow && (
-                            <div style={{ marginBottom: '10px', textAlign: 'center' }}>
-                                <button onClick={createDoctorAppointment} style={{ padding: '8px', border: '1px solid #ccc', borderRadius: '5px', backgroundColor: '#f9f9f9', transition: 'background-color 0.3s ease', cursor: 'pointer', fontSize: '0.9em', marginRight: '10px' }}>Confirm</button>
-                                <button onClick={() => setShowNewAppointmentRow(false)} style={{ padding: '8px', border: '1px solid #ccc', borderRadius: '5px', backgroundColor: '#f9f9f9', transition: 'background-color 0.3s ease', cursor: 'pointer', fontSize: '0.9em' }}>Cancel</button>
-                            </div>
                         )}
                     </div>
                 );
