@@ -31,6 +31,7 @@ interface MedicalRecord {
     Treatment: string;
     Notes: string;
     RecordDate: string; // Or Date type
+    PatientName?: string; // Add PatientName property
     // Add other relevant medical record fields
 }
 
@@ -1266,27 +1267,26 @@ const App: React.FC = () => {
                             <table style={{ borderCollapse: 'collapse', width: '100%', backgroundColor: '#ffffff' }}>
                                 <thead>
                                     <tr>
-                                        <th style={{ border: '1px solid #ddd', padding: '8px' }}>Record ID</th>
                                         <th style={{ border: '1px solid #ddd', padding: '8px' }}>Appointment ID</th>
+                                        <th style={{ border: '1px solid #ddd', padding: '8px' }}>Patient Name</th>
                                         <th style={{ border: '1px solid #ddd', padding: '8px' }}>Diagnosis</th>
                                         <th style={{ border: '1px solid #ddd', padding: '8px' }}>Treatment</th>
                                         <th style={{ border: '1px solid #ddd', padding: '8px' }}>Notes</th>
-                                        <th style={{ border: '1px solid #ddd', padding: '8px' }}>Date</th>
                                     </tr>
                                 </thead>
                                 <tbody>
                                     {showNewMedicalRecordRow && (
                                         <tr style={{ backgroundColor: '#e9e9e9' }}>
-                                            <td>New</td>
                                             <td>
                                                  <input
-                                                    type="number"
-                                                    name="appointment_id"
-                                                    value={newMedicalRecordFormData.appointment_id}
-                                                    onChange={handleNewMedicalRecordFormChange}
-                                                    style={{ width: '100%', padding: '5px' }}
-                                                 />
+                                                     type="number"
+                                                     name="appointment_id"
+                                                     value={newMedicalRecordFormData.appointment_id}
+                                                     onChange={handleNewMedicalRecordFormChange}
+                                                     style={{ width: '100%', padding: '5px' }}
+                                                  />
                                             </td>
+                                            <td></td> {/* Placeholder for Patient Name in new row */}
                                             <td>
                                                 <input
                                                     type="text"
@@ -1314,15 +1314,14 @@ const App: React.FC = () => {
                                                     style={{ width: '100%', padding: '5px' }}
                                                  />
                                             </td>
-                                            <td></td>
                                         </tr>
                                     )}
                                     {doctorMedicalRecords.map(record => (
                                         <tr key={record.RecordID}>
-                                            <td style={{ border: '1px solid #ddd', padding: '8px' }}>{record.RecordID}</td>
                                             {editingMedicalRecordId === record.RecordID ? (
                                                 <>
-                                                    <td style={{ border: '1px solid #ddd', padding: '8px' }}>{record.AppointmentID}</td> {/* Keep AppointmentID as is */}
+                                                    <td style={{ border: '1px solid #ddd', padding: '8px' }}>{record.AppointmentID}</td>
+                                                    <td style={{ border: '1px solid #ddd', padding: '8px' }}>{record.PatientName || 'N/A'}</td> {/* Display Patient Name */}
                                                     <td style={{ border: '1px solid #ddd', padding: '8px' }}>
                                                         <input
                                                             type="text"
@@ -1350,7 +1349,6 @@ const App: React.FC = () => {
                                                             rows={3}
                                                          />
                                                     </td>
-                                                    <td style={{ border: '1px solid #ddd', padding: '8px' }}>{record.RecordDate}</td> {/* Keep RecordDate as is */}
                                                      <td style={{ border: '1px solid #ddd', padding: '8px' }}> {/* Action buttons */}
                                                          <button onClick={() => updateMedicalRecord()} style={{ padding: '8px', border: '1px solid #ccc', borderRadius: '5px', backgroundColor: '#f9f9f9', transition: 'background-color 0.3s ease', cursor: 'pointer', fontSize: '0.9em', marginRight: '5px' }}>Confirm</button>
                                                          <button onClick={() => setEditingMedicalRecordId(null)} style={{ padding: '8px', border: '1px solid #ccc', borderRadius: '5px', backgroundColor: '#f9f9f9', transition: 'background-color 0.3s ease', cursor: 'pointer', fontSize: '0.9em' }}>Cancel</button>
@@ -1358,15 +1356,14 @@ const App: React.FC = () => {
                                                 </>
                                             ) : (
                                                 <>
-                                                    <td style={{ border: '1px solid #ddd', padding: '8px' }}>{record.RecordID}</td>
                                                     <td style={{ border: '1px solid #ddd', padding: '8px' }}>{record.AppointmentID}</td>
+                                                    <td style={{ border: '1px solid #ddd', padding: '8px' }}>{record.PatientName || 'N/A'}</td> {/* Display Patient Name */}
                                                     <td style={{ border: '1px solid #ddd', padding: '8px' }}>{record.Diagnosis}</td>
                                                     <td style={{ border: '1px solid #ddd', padding: '8px' }}>{record.Treatment}</td>
                                                     <td style={{ border: '1px solid #ddd', padding: '8px' }}>{record.Notes}</td>
-                                                    <td style={{ border: '1px solid #ddd', padding: '8px' }}>{record.RecordDate}</td>
-                                                    <td style={{ border: '1px solid #ddd', padding: '8px' }}> {/* Action button */}
-                                                        <button onClick={() => { setEditingMedicalRecordId(record.RecordID); setEditMedicalRecordFormData(record); }} style={{ padding: '8px', border: '1px solid #ccc', borderRadius: '5px', backgroundColor: '#f9f9f9', transition: 'background-color 0.3s ease', cursor: 'pointer', fontSize: '0.9em' }}>Edit</button>
-                                                    </td>
+                                                     <td style={{ border: '1px solid #ddd', padding: '8px' }}> {/* Action button */}
+                                                         <button onClick={() => { setEditingMedicalRecordId(record.RecordID); setEditMedicalRecordFormData(record); }} style={{ padding: '8px', border: '1px solid #ccc', borderRadius: '5px', backgroundColor: '#f9f9f9', transition: 'background-color 0.3s ease', cursor: 'pointer', fontSize: '0.9em' }}>Edit</button>
+                                                     </td>
                                                 </>
                                             )}
                                         </tr>
@@ -1519,55 +1516,54 @@ const App: React.FC = () => {
                      <div>
                          <h3>Edit Patient Profile</h3>
                           {patientProfile ? (
-                              <div>
-                                  <div style={{ marginBottom: '10px' }}>
-                                      <label htmlFor="patientName">Name:</label>
-                                      <input
-                                          id="patientName"
-                                          type="text"
-                                          name="Name"
-                                          value={editPatientProfileFormData.Name || ''}
-                                          onChange={handleEditPatientProfileFormChange}
-                                          style={{ marginLeft: '10px' }}
-                                      />
-                                  </div>
+                              <div style={{ width: '400px' }}> {/* Adjusted width, left-aligned */}
                                    <div style={{ marginBottom: '10px' }}>
-                                      <label htmlFor="patientDOB">Date of Birth:</label>
-                                      <input
-                                          id="patientDOB"
-                                          type="text"
-                                          name="DOB"
-                                          placeholder="DD/MM/YYYY"
-                                          value={editPatientProfileFormData.DOB || ''}
-                                          onChange={handleEditPatientProfileFormChange}
-                                          style={{ marginLeft: '10px' }}
-                                       />
-                                  </div>
-                                   <div style={{ marginBottom: '10px' }}>
-                                      <label htmlFor="patientGender">Gender:</label>
-                                       <select
-                                           id="patientGender"
-                                           name="Gender"
-                                           value={editPatientProfileFormData.Gender || ''}
+                                       <label htmlFor="patientName">Name:</label>
+                                       <input
+                                           id="patientName"
+                                           type="text"
+                                           name="Name"
+                                           value={editPatientProfileFormData.Name || ''}
                                            onChange={handleEditPatientProfileFormChange}
-                                            style={{ marginLeft: '10px' }}
-                                       >
-                                           <option value="">Select Gender</option>
-                                           <option value="Male">Male</option>
-                                           <option value="Female">Female</option>
-                                           <option value="Other">Other</option>
-                                       </select>
-                                  </div>
-                                   <div style={{ marginBottom: '10px' }}>
-                                      <label htmlFor="patientContact">Contact:</label>
-                                      <input
-                                          id="patientContact"
-                                          type="text"
-                                          name="Contact"
-                                          value={editPatientProfileFormData.Contact || ''}
-                                          onChange={handleEditPatientProfileFormChange}
-                                          style={{ marginLeft: '10px' }}
-                                      />
+                                           style={{ marginLeft: '10px' }}
+                                       />
+                                   </div>
+                                    <div style={{ marginBottom: '10px' }}>
+                                       <label htmlFor="patientDOB">Date of Birth:</label>
+                                       <input
+                                           id="patientDOB"
+                                           type="date"
+                                           name="DOB"
+                                           value={editPatientProfileFormData.DOB || ''}
+                                           onChange={handleEditPatientProfileFormChange}
+                                           style={{ padding: '10px', width: 'calc(100% - 22px)', marginLeft: '10px' }}
+                                        />
+                                   </div>
+                                    <div style={{ marginBottom: '10px' }}>
+                                       <label htmlFor="patientGender">Gender:</label>
+                                        <select
+                                            id="patientGender"
+                                            name="Gender"
+                                            value={editPatientProfileFormData.Gender || ''}
+                                            onChange={handleEditPatientProfileFormChange}
+                                             style={{ marginLeft: '10px' }}
+                                        >
+                                            <option value="">Select Gender</option>
+                                            <option value="Male">Male</option>
+                                            <option value="Female">Female</option>
+                                            <option value="Other">Other</option>
+                                        </select>
+                                   </div>
+                                    <div style={{ marginBottom: '10px' }}>
+                                       <label htmlFor="patientContact">Contact:</label>
+                                       <input
+                                           id="patientContact"
+                                           type="text"
+                                           name="Contact"
+                                           value={editPatientProfileFormData.Contact || ''}
+                                           onChange={handleEditPatientProfileFormChange}
+                                           style={{ marginLeft: '10px' }}
+                                       />
                                    </div>
                                    <button onClick={patientUpdateProfile}>Save Changes</button>
                                     {editPatientProfileMessage && <p style={{ color: editPatientProfileMessage.includes('Failed') ? 'red' : 'green' }}>{editPatientProfileMessage}</p>}
@@ -1716,10 +1712,8 @@ const App: React.FC = () => {
                     padding: '50px',
                     borderRadius: '10px',
                     textAlign: 'center',
-                    width: '400px',
+                    width: '300px',
                     margin: 'auto',
-                    // backgroundImage: `url('background_loginpage.jpg')`, // Remove background image from the box
-                    // backgroundSize: 'cover',
                     backdropFilter: 'blur(5px)', // Add blur effect
                 }}>
                     <h2>Login</h2>
