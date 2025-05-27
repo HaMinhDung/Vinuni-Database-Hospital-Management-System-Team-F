@@ -983,10 +983,11 @@ const App: React.FC = () => {
         if (loadingDoctorData) return <p>Loading...</p>;
         if (doctorError) return <p style={{ color: 'red' }}>Error: {doctorError}</p>;
 
+        // Troubleshooting: testing if edits can be applied here
         switch (doctorActiveMenuItem) {
             case 'profile':
-    return (
-                <div>
+                return (
+                    <div>
                         <h3>Doctor Profile</h3>
                         {doctorProfile ? (
                             <div>
@@ -1054,6 +1055,7 @@ const App: React.FC = () => {
                                         <th style={{ border: '1px solid #ddd', padding: '8px' }}>Patient Name</th>
                                         <th style={{ border: '1px solid #ddd', padding: '8px' }}>Date/Time</th>
                                         <th style={{ border: '1px solid #ddd', padding: '8px' }}>Status</th>
+                                        <th style={{ border: '1px solid #ddd', padding: '8px' }}>Actions</th>
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -1070,13 +1072,10 @@ const App: React.FC = () => {
                                                 />
                                             </td>
                                             <td>
-                                                {newAppointmentPatientName || 'Enter Patient ID'}
-                                            </td>
-                                            <td>
                                                 <input
-                                                    type="text"
+                                                    type="datetime-local"
                                                     name="datetime_str"
-                                                    placeholder="YYYY-MM-DD HH:MM:SS"
+                                                    placeholder="YYYY-MM-DDTHH:MM"
                                                     value={newAppointmentFormData.datetime_str || ''}
                                                     onChange={handleNewAppointmentFormChange}
                                                     style={{ width: '100%', padding: '5px' }}
@@ -1098,61 +1097,59 @@ const App: React.FC = () => {
                                     )}
                                     {doctorAppointments.map(appointment => (
                                         <tr key={appointment.AppointmentID}>
-                                            <td style={{ border: '1px solid #ddd', padding: '8px' }}>{appointment.AppointmentID}</td>
-                                            {editingAppointmentId === appointment.AppointmentID ? (
-                                                <>
-                                                    <td style={{ border: '1px solid #ddd', padding: '8px' }}>
-                                                         <input
-                                                            type="number"
-                                                            name="patient_id"
-                                                            value={editAppointmentFormData.patient_id || ''}
-                                                            onChange={handleEditAppointmentFormChange}
-                                                            style={{ width: '100%', padding: '5px' }}
-                                                        />
-                                                    </td>
-                                                    <td style={{ border: '1px solid #ddd', padding: '8px' }}>{/* Patient Name placeholder */}
-                                                         {/* We don't dynamically fetch name here for simplicity */}
-                                                         {appointment.PatientName || 'N/A'}
-                                                     </td>
-                                                    <td style={{ border: '1px solid #ddd', padding: '8px' }}>
-                                                        <input
-                                                            type="text"
-                                                            name="datetime_str"
-                                                            placeholder="YYYY-MM-DD HH:MM:SS"
-                                                            value={editAppointmentFormData.datetime_str || ''}
-                                                            onChange={handleEditAppointmentFormChange}
-                                                            style={{ width: '100%', padding: '5px' }}
-                                                        />
-                                                    </td>
-                                                    <td style={{ border: '1px solid #ddd', padding: '8px' }}>
-                                                        <select
-                                                             name="status"
-                                                             value={editAppointmentFormData.status || ''}
-                                                             onChange={handleEditAppointmentFormChange}
-                                                             style={{ width: '100%', padding: '5px' }}
-                                                        >
-                                                             <option value="Scheduled">Scheduled</option>
-                                                             <option value="Completed">Completed</option>
-                                                             <option value="Cancelled">Cancelled</option>
-                                                        </select>
-                                                    </td>
-                                                     <td style={{ border: '1px solid #ddd', padding: '8px' }}> {/* Action buttons */}
-                                                         <button onClick={() => updateDoctorAppointment()} style={{ padding: '8px', border: '1px solid #ccc', borderRadius: '5px', backgroundColor: '#f9f9f9', transition: 'background-color 0.3s ease', cursor: 'pointer', fontSize: '0.9em', marginRight: '5px' }}>Confirm</button>
-                                                         <button onClick={() => setEditingAppointmentId(null)} style={{ padding: '8px', border: '1px solid #ccc', borderRadius: '5px', backgroundColor: '#f9f9f9', transition: 'background-color 0.3s ease', cursor: 'pointer', fontSize: '0.9em' }}>Cancel</button>
-                                                     </td>
-                                                </>
-                                            ) : (
-                                                <>
-                                                    <td style={{ border: '1px solid #ddd', padding: '8px' }}>{appointment.PatientID}</td>
-                                                    <td style={{ border: '1px solid #ddd', padding: '8px' }}>{appointment.PatientName || 'N/A'}</td> {/* Display patient name */}
-                                                    <td style={{ border: '1px solid #ddd', padding: '8px' }}>{appointment.DateTime}</td>
-                                                    <td style={{ border: '1px solid #ddd', padding: '8px' }}>{appointment.Status}</td>
-                                                    <td style={{ border: '1px solid #ddd', padding: '8px' }}> {/* Action button */}
-                                                        <button onClick={() => { setEditingAppointmentId(appointment.AppointmentID); setEditAppointmentFormData({ appointment_id: String(appointment.AppointmentID), patient_id: String(appointment.PatientID), datetime_str: appointment.DateTime, status: appointment.Status }); }} style={{ padding: '8px', border: '1px solid #ccc', borderRadius: '5px', backgroundColor: '#f9f9f9', transition: 'background-color 0.3s ease', cursor: 'pointer', fontSize: '0.9em' }}>Edit</button>
-                                                    </td>
-                                                </>
-                                            )}
-                                        </tr>
+                                              {editingAppointmentId === appointment.AppointmentID ? (
+                                                  <>
+                                                      <td style={{ border: '1px solid #ddd', padding: '8px' }}>{appointment.AppointmentID}</td> {/* Display Appointment ID in edit mode too */}
+                                                      <td style={{ border: '1px solid #ddd', padding: '8px' }}> {/* Patient ID input */}
+                                                          <input
+                                                              type="number"
+                                                              name="patient_id"
+                                                              value={editAppointmentFormData.patient_id || ''}
+                                                              onChange={handleEditAppointmentFormChange}
+                                                              style={{ width: '100%', padding: '5px' }}
+                                                          />
+                                                      </td>
+                                                      <td style={{ border: '1px solid #ddd', padding: '8px' }}>{appointment.PatientName || 'N/A'}</td> {/* Display Patient Name (not editable) */}
+                                                      <td style={{ border: '1px solid #ddd', padding: '8px' }}> {/* Date/Time input */}
+                                                          <input
+                                                              type="datetime-local"
+                                                              name="datetime_str"
+                                                              placeholder="YYYY-MM-DDTHH:MM"
+                                                              value={editAppointmentFormData.datetime_str || ''}
+                                                              onChange={handleEditAppointmentFormChange}
+                                                              style={{ width: '100%', padding: '5px' }}
+                                                          />
+                                                      </td>
+                                                      <td style={{ border: '1px solid #ddd', padding: '8px' }}> {/* Status select */}
+                                                          <select
+                                                               name="status"
+                                                               value={editAppointmentFormData.status || ''}
+                                                               onChange={handleEditAppointmentFormChange}
+                                                               style={{ width: '100%', padding: '5px' }}
+                                                          >
+                                                               <option value="Scheduled">Scheduled</option>
+                                                               <option value="Completed">Completed</option>
+                                                               <option value="Cancelled">Cancelled</option>
+                                                          </select>
+                                                      </td>
+                                                       <td style={{ border: '1px solid #ddd', padding: '8px' }}> {/* Action buttons */}
+                                                           <button onClick={() => updateDoctorAppointment()} style={{ padding: '8px', border: '1px solid #ccc', borderRadius: '5px', backgroundColor: '#f9f9f9', transition: 'background-color 0.3s ease', cursor: 'pointer', fontSize: '0.9em', marginRight: '5px' }}>Confirm</button>
+                                                           <button onClick={() => setEditingAppointmentId(null)} style={{ padding: '8px', border: '1px solid #ccc', borderRadius: '5px', backgroundColor: '#f9f9f9', transition: 'background-color 0.3s ease', cursor: 'pointer', fontSize: '0.9em' }}>Cancel</button>
+                                                       </td>
+                                                  </>
+                                              ) : (
+                                                  <>
+                                                      <td style={{ border: '1px solid #ddd', padding: '8px' }}>{appointment.AppointmentID}</td>
+                                                      <td style={{ border: '1px solid #ddd', padding: '8px' }}>{appointment.PatientID}</td>
+                                                      <td style={{ border: '1px solid #ddd', padding: '8px' }}>{appointment.PatientName || 'N/A'}</td> {/* Display patient name */}
+                                                      <td style={{ border: '1px solid #ddd', padding: '8px' }}>{appointment.DateTime}</td>
+                                                      <td style={{ border: '1px solid #ddd', padding: '8px' }}>{appointment.Status}</td>
+                                                       <td style={{ border: '1px solid #ddd', padding: '8px' }}> {/* Action button */}
+                                                           <button onClick={() => { setEditingAppointmentId(appointment.AppointmentID); setEditAppointmentFormData({ appointment_id: String(appointment.AppointmentID), patient_id: String(appointment.PatientID), datetime_str: appointment.DateTime, status: appointment.Status }); }} style={{ padding: '8px', border: '1px solid #ccc', borderRadius: '5px', backgroundColor: '#f9f9f9', transition: 'background-color 0.3s ease', cursor: 'pointer', fontSize: '0.9em' }}>Edit</button>
+                                                       </td>
+                                                  </>
+                                              )}
+                                          </tr>
                                     ))}
                                 </tbody>
                             </table>
