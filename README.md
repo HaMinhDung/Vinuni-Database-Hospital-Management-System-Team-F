@@ -132,13 +132,13 @@ cd be/
 pip install -r requirements.txt
 # Configure your MySQL credentials in db/connection.py
 python server.py
-
+```
 ### 7.3. Frontend Setup
 ```bash
 cd fe/
 npm install
 npm start
-
+```
 ## 8. Testing & Validation
 - Over **70 test cases** implemented
 - **Highlighted tests** included in the demo video
