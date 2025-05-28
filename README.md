@@ -74,6 +74,7 @@ SELECT p.Name AS PatientName, a.DateTime, m.Diagnosis, m.Treatment
 FROM Patient p
 JOIN Appointment a ON p.PatientID = a.PatientID
 JOIN MedicalRecord m ON a.AppointmentID = m.AppointmentID;
+```
 
 ## 4. Performance Optimizations
 
