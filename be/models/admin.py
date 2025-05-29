@@ -175,7 +175,16 @@ def admin_create_department(name):
 def admin_get_all_medical_records():
     conn = get_connection()
     cursor = conn.cursor(dictionary=True)
-    sql = "SELECT * FROM MedicalRecord"
+    sql = """SELECT
+                mr.*,
+                d.Name AS DoctorName
+            FROM
+                MedicalRecord mr
+            JOIN
+                Appointment a ON mr.AppointmentID = a.AppointmentID
+            JOIN
+                Doctor d ON a.DoctorID = d.DoctorID
+            """
     cursor.execute(sql)
     records = cursor.fetchall()
     cursor.close()

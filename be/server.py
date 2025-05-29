@@ -256,6 +256,22 @@ def update_appointment():
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
+# Xóa lịch hẹn của bệnh nhân (Bác sĩ)
+@app.route('/doctor/appointments', methods=['DELETE'])
+def delete_appointment_endpoint():
+    data = request.get_json()
+    if not data or 'appointment_id' not in data:
+        return jsonify({'error': 'Missing appointment_id in request data'}), 400
+
+    appointment_id = data['appointment_id']
+
+    try:
+        # Assuming appointment.delete_appointment exists
+        appointment.delete_appointment(int(appointment_id))
+        return jsonify({'message': 'Appointment deleted successfully'})
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
 # Tạo hồ sơ y tế cho appointment và cập nhật trạng thái cuộc hẹn thành 'Completed'
 @app.route('/doctor/medical_record', methods=['POST'])
 def create_medical_record():
@@ -284,6 +300,50 @@ def create_medical_record():
             "Completed"
         )
         return jsonify({'message': 'Medical record created and appointment completed'})
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+# Cập nhật hồ sơ y tế (Bác sĩ)
+@app.route('/doctor/medical_record', methods=['PUT'])
+def update_medical_record_endpoint():
+    data = request.get_json()
+    if not data or 'record_id' not in data:
+        return jsonify({'error': 'Missing record_id in request data'}), 400
+
+    record_id = data['record_id']
+    diagnosis = data.get('diagnosis')
+    treatment = data.get('treatment')
+    notes = data.get('notes')
+
+    # Check if at least one field to update is provided
+    if not any([diagnosis, treatment, notes]):
+         return jsonify({'message': 'No update data provided.'}), 200 # Or 400
+
+    try:
+        # Assuming medical_record.update_medical_record exists and handles updates
+        medical_record.update_medical_record(
+            int(record_id),
+            diagnosis,
+            treatment,
+            notes
+        )
+        return jsonify({'message': 'Medical record updated successfully'})
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+# Xóa hồ sơ y tế (Bác sĩ)
+@app.route('/doctor/medical_record', methods=['DELETE'])
+def delete_medical_record_endpoint():
+    data = request.get_json()
+    if not data or 'record_id' not in data:
+        return jsonify({'error': 'Missing record_id in request data'}), 400
+
+    record_id = data['record_id']
+
+    try:
+        # Assuming medical_record.delete_medical_record exists
+        medical_record.delete_medical_record(int(record_id))
+        return jsonify({'message': 'Medical record deleted successfully'})
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 

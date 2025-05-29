@@ -19,6 +19,7 @@ interface Appointment {
     PatientID: number;
     PatientName?: string;
     DoctorID: number;
+    DoctorName?: string; // Add DoctorName property
     DateTime: string; // Or Date type if preferred
     Status: string;
     // Add other relevant appointment fields
@@ -32,6 +33,7 @@ interface MedicalRecord {
     Notes: string;
     RecordDate: string; // Or Date type
     PatientName?: string; // Add PatientName property
+    DoctorName?: string; // Add DoctorName property
     // Add other relevant medical record fields
 }
 
@@ -123,6 +125,13 @@ const App: React.FC = () => {
     const [editingDoctor, setEditingDoctor] = useState<DoctorProfile | null>(null);
     const [doctorFormData, setDoctorFormData] = useState<Partial<DoctorProfile>>({});
     const [doctorFormMessage, setDoctorFormMessage] = useState<string | null>(null);
+    const [showAddDoctorRow, setShowAddDoctorRow] = useState<boolean>(false);
+
+    // Admin Patient Management states
+    const [showAddPatientRow, setShowAddPatientRow] = useState<boolean>(false);
+    const [editingPatient, setEditingPatient] = useState<Patient | null>(null);
+    const [patientFormData, setPatientFormData] = useState<Partial<Patient>>({});
+    const [patientFormMessage, setPatientFormMessage] = useState<string | null>(null);
 
     // Function to calculate the next rounded hour 24 hours from now
     const calculateDefaultAppointmentTime = () => {
@@ -595,6 +604,39 @@ const App: React.FC = () => {
         }
     };
 
+    const deleteAppointment = async (appointmentId: number) => {
+        setLoadingDoctorData(true);
+        setDoctorError(null);
+        setEditAppointmentMessage(null); // Use for general messages too
+
+        if (!doctorId) {
+            setEditAppointmentMessage('Doctor ID not available.');
+            setLoadingDoctorData(false);
+            return;
+        }
+
+        try {
+            const response = await fetch('http://localhost:5000/doctor/appointments', {
+                method: 'DELETE',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ appointment_id: appointmentId })
+            });
+            const data = await response.json();
+            if (response.ok) {
+                setEditAppointmentMessage(data.message || 'Appointment deleted successfully!');
+                fetchDoctorAppointments(); // Refresh the list
+            } else {
+                setEditAppointmentMessage(data.error || 'Failed to delete appointment');
+                setDoctorError(data.error || 'Failed to delete appointment');
+            }
+        } catch (error: any) {
+            setEditAppointmentMessage(error.message || 'An error occurred while deleting appointment');
+            setDoctorError(error.message || 'An error occurred while deleting appointment');
+        } finally {
+            setLoadingDoctorData(false);
+        }
+    };
+
     const createMedicalRecord = async () => {
         if (!doctorId) return;
         // Using form state instead of prompt
@@ -1039,102 +1081,257 @@ const App: React.FC = () => {
                     <div>
                         <h3>Manage Doctors</h3>
                          <button onClick={fetchAdminDoctors} style={{ marginRight: '10px' }}>Refresh Doctors</button>
-                         <button onClick={() => { setShowDoctorForm(true); setEditingDoctor(null); setDoctorFormData({}); setDoctorFormMessage(null); }}>Add New Doctor</button>
-                         {adminDoctors.length > 0 ? (
-                             <table style={{ borderCollapse: 'collapse', width: '100%', backgroundColor: '#fff' }}>
-                                 <thead>
-                                     <tr>
-                                         <th style={{ border: '1px solid #ddd', padding: '8px' }}>Doctor ID</th>
-                                         <th style={{ border: '1px solid #ddd', padding: '8px' }}>Name</th>
-                                         <th style={{ border: '1px solid #ddd', padding: '8px' }}>Specialization</th>
-                                         <th style={{ border: '1px solid #ddd', padding: '8px' }}>Department ID</th>
-                                         <th style={{ border: '1px solid #ddd', padding: '8px' }}>Actions</th>
-                                     </tr>
-                                 </thead>
-                                 <tbody>
-                                     {adminDoctors.map(doctor => (
-                                         <tr key={doctor.DoctorID}>
-                                             <td style={{ border: '1px solid #ddd', padding: '8px' }}>{doctor.DoctorID}</td>
-                                             <td style={{ border: '1px solid #ddd', padding: '8px' }}>{doctor.Name}</td>
-                                             <td style={{ border: '1px solid #ddd', padding: '8px' }}>{doctor.Specialization}</td>
-                                             <td style={{ border: '1px solid #ddd', padding: '8px' }}>{doctor.DepartmentID}</td>
-                                             <td style={{ border: '1px solid #ddd', padding: '8px' }}>
-                                                 <button onClick={() => { setEditingDoctor(doctor); setShowDoctorForm(true); setDoctorFormData(doctor); setDoctorFormMessage(null); }} style={{ marginRight: '5px' }}>Edit</button>
-                                                 <button onClick={() => { if (window.confirm(`Are you sure you want to delete doctor ${doctor.Name} (ID: ${doctor.DoctorID})?`)) deleteDoctor(doctor.DoctorID); }}>Delete</button>
-                                             </td>
-                                         </tr>
-                                     ))}
-                                 </tbody>
-                             </table>
-                         ) : (
-                             <p>No doctors found.</p>
-                         )}
-                         {/* Add/Edit Doctor Form */}
-                         {showDoctorForm && (
-                             <div style={{ marginTop: '20px', padding: '20px', border: '1px solid #ccc', borderRadius: '8px', backgroundColor: '#f9f9f9' }}>
-                                 <h4>{editingDoctor ? 'Edit Doctor' : 'Add New Doctor'}</h4>
-                                 {doctorFormMessage && <p style={{ color: doctorFormMessage.includes('Failed') ? 'red' : 'green' }}>{doctorFormMessage}</p>}
-                                 <div style={{ marginBottom: '10px' }}>
-                                     <label>Name:</label>
-                                     <input
-                                         type="text"
-                                         name="Name"
-                                         value={doctorFormData.Name || ''}
-                                         onChange={handleDoctorFormChange}
-                                         style={{ marginLeft: '10px' }}
-                                     />
-                                 </div>
-                                 <div style={{ marginBottom: '10px' }}>
-                                     <label>Department ID:</label>
-                                      {/* Consider replacing with a select dropdown populated from fetched departments */}
-                                     <input
-                                         type="number"
-                                         name="DepartmentID"
-                                         value={doctorFormData.DepartmentID || ''}
-                                         onChange={handleDoctorFormChange}
-                                         style={{ marginLeft: '10px' }}
-                                     />
-                                 </div>
-                                  {/* Specialization will be derived from Department ID on backend */}
-                                 <div style={{ marginTop: '15px' }}>
-                                     <button onClick={editingDoctor ? updateDoctor : createDoctor} style={{ marginRight: '10px' }}>{editingDoctor ? 'Save Changes' : 'Create Doctor'}</button>
-                                     <button onClick={() => setShowDoctorForm(false)}>Cancel</button>
-                                 </div>
-                             </div>
-                         )}
+                         <button onClick={() => { setShowAddDoctorRow(!showAddDoctorRow); setDoctorFormData({}); setDoctorFormMessage(null); }}>{showAddDoctorRow ? 'Cancel Add' : 'Add New Doctor'}</button>
+                          {adminDoctors.length > 0 ? (
+                              <table style={{ borderCollapse: 'collapse', width: '100%', backgroundColor: '#fff' }}>
+                                  <thead>
+                                      <tr>
+                                          <th style={{ border: '1px solid #ddd', padding: '8px' }}>Doctor ID</th>
+                                          <th style={{ border: '1px solid #ddd', padding: '8px' }}>Name</th>
+                                          <th style={{ border: '1px solid #ddd', padding: '8px' }}>Specialization</th>
+                                          <th style={{ border: '1px solid #ddd', padding: '8px' }}>Department ID</th>
+                                          <th style={{ border: '1px solid #ddd', padding: '8px' }}>Actions</th>
+                                      </tr>
+                                  </thead>
+                                  <tbody>
+                                      {/* Inline row for adding a new doctor */}
+                                      {showAddDoctorRow && (
+                                          <tr style={{ backgroundColor: '#e9e9e9' }}>
+                                              <td style={{ border: '1px solid #ddd', padding: '8px' }}>New</td> {/* Placeholder for new ID */}
+                                              <td style={{ border: '1px solid #ddd', padding: '8px' }}>
+                                                  <input
+                                                      type="text"
+                                                      name="Name"
+                                                      value={doctorFormData.Name || ''}
+                                                      onChange={handleDoctorFormChange}
+                                                      placeholder="Doctor Name"
+                                                      style={{ width: '100%', padding: '5px' }}
+                                                  />
+                                              </td>
+                                              <td style={{ border: '1px solid #ddd', padding: '8px' }}>{doctorFormData.Specialization || 'N/A'}</td> {/* Display derived specialization */}
+                                              <td style={{ border: '1px solid #ddd', padding: '8px' }}>
+                                                  <select
+                                                      name="DepartmentID"
+                                                      value={doctorFormData.DepartmentID || ''}
+                                                      onChange={handleDoctorFormChange}
+                                                      style={{ width: '100%', padding: '5px' }}
+                                                  >
+                                                      <option value="">Select Department</option>
+                                                      {adminDepartments.map(dept => (
+                                                          <option key={dept.DepartmentID} value={dept.DepartmentID}>
+                                                              {dept.Name}
+                                                          </option>
+                                                      ))}
+                                                  </select>
+                                              </td>
+                                              <td style={{ border: '1px solid #ddd', padding: '8px' }}>
+                                                  <button onClick={createDoctor} style={{ padding: '8px', border: '1px solid #ccc', borderRadius: '5px', backgroundColor: '#f9f9f9', transition: 'background-color 0.3s ease', cursor: 'pointer', fontSize: '0.9em', marginRight: '10px' }}>Create</button>
+                                                  <button onClick={() => setShowAddDoctorRow(false)} style={{ padding: '8px', border: '1px solid #ccc', borderRadius: '5px', backgroundColor: '#f9f9f9', transition: 'background-color 0.3s ease', cursor: 'pointer', fontSize: '0.9em' }}>Cancel</button>
+                                              </td>
+                                          </tr>
+                                      )}
+                                      {adminDoctors.map(doctor => (
+                                          <tr key={doctor.DoctorID}>
+                                              {editingDoctor?.DoctorID === doctor.DoctorID ? (
+                                                  // Inline Edit Row
+                                                  <>
+                                                      <td style={{ border: '1px solid #ddd', padding: '8px' }}>{doctor.DoctorID}</td>
+                                                      <td style={{ border: '1px solid #ddd', padding: '8px' }}>
+                                                          <input
+                                                              type="text"
+                                                              name="Name"
+                                                              value={doctorFormData.Name || ''}
+                                                              onChange={handleDoctorFormChange}
+                                                              style={{ width: '100%', padding: '5px' }}
+                                                          />
+                                                      </td>
+                                                      <td style={{ border: '1px solid #ddd', padding: '8px' }}>{doctorFormData.Specialization || 'N/A'}</td> {/* Display derived specialization */}
+                                                      <td style={{ border: '1px solid #ddd', padding: '8px' }}>
+                                                          <select
+                                                              name="DepartmentID"
+                                                              value={doctorFormData.DepartmentID || ''}
+                                                              onChange={handleDoctorFormChange}
+                                                              style={{ width: '100%', padding: '5px' }}
+                                                          >
+                                                              <option value="">Select Department</option>
+                                                              {adminDepartments.map(dept => (
+                                                                  <option key={dept.DepartmentID} value={dept.DepartmentID}>
+                                                                      {dept.Name}
+                                                                  </option>
+                                                              ))}
+                                                          </select>
+                                                      </td>
+                                                      <td style={{ border: '1px solid #ddd', padding: '8px' }}>
+                                                          <button onClick={updateDoctor} style={{ padding: '8px', border: '1px solid #ccc', borderRadius: '5px', backgroundColor: '#f9f9f9', transition: 'background-color 0.3s ease', cursor: 'pointer', fontSize: '0.9em', marginRight: '10px' }}>Save</button>
+                                                          <button onClick={() => setEditingDoctor(null)} style={{ padding: '8px', border: '1px solid #ccc', borderRadius: '5px', backgroundColor: '#f9f9f9', transition: 'background-color 0.3s ease', cursor: 'pointer', fontSize: '0.9em' }}>Cancel</button>
+                                                      </td>
+                                                  </>
+                                              ) : (
+                                                  // Display Row
+                                                  <>
+                                                      <td style={{ border: '1px solid #ddd', padding: '8px' }}>{doctor.DoctorID}</td>
+                                                      <td style={{ border: '1px solid #ddd', padding: '8px' }}>{doctor.Name}</td>
+                                                      <td style={{ border: '1px solid #ddd', padding: '8px' }}>{doctor.Specialization}</td>
+                                                      <td style={{ border: '1px solid #ddd', padding: '8px' }}>{doctor.DepartmentID}</td>
+                                                      <td style={{ border: '1px solid #ddd', padding: '8px' }}>
+                                                          <button onClick={() => { setEditingDoctor(doctor); setDoctorFormData(doctor); }} style={{ marginRight: '5px' }}>Edit</button>
+                                                          <button onClick={() => { if (window.confirm(`Are you sure you want to delete doctor ${doctor.Name} (ID: ${doctor.DoctorID})?`)) deleteDoctor(doctor.DoctorID); }}>Delete</button>
+                                                      </td>
+                                                  </>
+                                              )}
+                                          </tr>
+                                      ))}
+                                  </tbody>
+                              </table>
+                          ) : (
+                              <p>No doctors found.</p>
+                          )}
                     </div>
                 );
             case 'manage_patients':
                  return (
                      <div>
                          <h3>Manage Patients</h3>
-                         <button onClick={fetchAdminPatients}>Refresh Patients</button>
-                         {adminPatients.length > 0 ? (
-                              <table style={{ borderCollapse: 'collapse', width: '100%', backgroundColor: '#fff' }}>
-                                 <thead>
-                                     <tr>
-                                         <th style={{ border: '1px solid #ddd', padding: '8px' }}>Patient ID</th>
-                                         <th style={{ border: '1px solid #ddd', padding: '8px' }}>Name</th>
-                                         <th style={{ border: '1px solid #ddd', padding: '8px' }}>DOB</th>
-                                         <th style={{ border: '1px solid #ddd', padding: '8px' }}>Gender</th>
-                                         <th style={{ border: '1px solid #ddd', padding: '8px' }}>Contact</th>
-                                     </tr>
-                                 </thead>
-                                 <tbody>
-                                     {adminPatients.map(patient => (
-                                         <tr key={patient.PatientID}>
-                                             <td style={{ border: '1px solid #ddd', padding: '8px' }}>{patient.PatientID}</td>
-                                             <td style={{ border: '1px solid #ddd', padding: '8px' }}>{patient.Name}</td>
-                                             <td style={{ border: '1px solid #ddd', padding: '8px' }}>{patient.DOB}</td>
-                                             <td style={{ border: '1px solid #ddd', padding: '8px' }}>{patient.Gender}</td>
-                                             <td style={{ border: '1px solid #ddd', padding: '8px' }}>{patient.Contact}</td>
-                                         </tr>
-                                     ))}
-                                 </tbody>
-                             </table>
-                         ) : (
-                             <p>No patients found.</p>
-                         )}
+                         <button onClick={fetchAdminPatients} style={{ marginRight: '10px' }}>Refresh Patients</button>
+                         <button onClick={() => { setShowAddPatientRow(!showAddPatientRow); setPatientFormData({}); setPatientFormMessage(null); }}>{showAddPatientRow ? 'Cancel Add' : 'Add New Patient'}</button>
+                          {adminPatients.length > 0 ? (
+                               <table style={{ borderCollapse: 'collapse', width: '100%', backgroundColor: '#fff' }}>
+                                  <thead>
+                                      <tr>
+                                          <th style={{ border: '1px solid #ddd', padding: '8px' }}>Patient ID</th>
+                                          <th style={{ border: '1px solid #ddd', padding: '8px' }}>Name</th>
+                                          <th style={{ border: '1px solid #ddd', padding: '8px' }}>DOB</th>
+                                          <th style={{ border: '1px solid #ddd', padding: '8px' }}>Gender</th>
+                                          <th style={{ border: '1px solid #ddd', padding: '8px' }}>Contact</th>
+                                          <th style={{ border: '1px solid #ddd', padding: '8px' }}>Actions</th> {/* Add Actions header */}
+                                      </tr>
+                                  </thead>
+                                  <tbody>
+                                      {/* Inline row for adding a new patient */}
+                                      {showAddPatientRow && (
+                                          <tr style={{ backgroundColor: '#e9e9e9' }}>
+                                              <td style={{ border: '1px solid #ddd', padding: '8px' }}>New</td> {/* Placeholder for new ID */}
+                                              <td style={{ border: '1px solid #ddd', padding: '8px' }}>
+                                                  <input
+                                                      type="text"
+                                                      name="Name"
+                                                      value={patientFormData.Name || ''}
+                                                      onChange={handlePatientFormChange}
+                                                      placeholder="Patient Name"
+                                                      style={{ width: '100%', padding: '5px' }}
+                                                  />
+                                              </td>
+                                              <td style={{ border: '1px solid #ddd', padding: '8px' }}>
+                                                  <input
+                                                      type="date"
+                                                      name="DOB"
+                                                      value={patientFormData.DOB || ''}
+                                                      onChange={handlePatientFormChange}
+                                                      placeholder="YYYY-MM-DD"
+                                                      style={{ width: '100%', padding: '5px' }}
+                                                  />
+                                              </td>
+                                              <td style={{ border: '1px solid #ddd', padding: '8px' }}>
+                                                  <select
+                                                      name="Gender"
+                                                      value={patientFormData.Gender || ''}
+                                                      onChange={handlePatientFormChange}
+                                                      style={{ width: '100%', padding: '5px' }}
+                                                  >
+                                                      <option value="">Select Gender</option>
+                                                      <option value="Male">Male</option>
+                                                      <option value="Female">Female</option>
+                                                      <option value="Other">Other</option>
+                                                  </select>
+                                              </td>
+                                              <td style={{ border: '1px solid #ddd', padding: '8px' }}>
+                                                  <input
+                                                      type="text"
+                                                      name="Contact"
+                                                      value={patientFormData.Contact || ''}
+                                                      onChange={handlePatientFormChange}
+                                                      placeholder="Contact Info"
+                                                      style={{ width: '100%', padding: '5px' }}
+                                                  />
+                                              </td>
+                                              <td style={{ border: '1px solid #ddd', padding: '8px' }}>
+                                                  <button onClick={createPatient} style={{ padding: '8px', border: '1px solid #ccc', borderRadius: '5px', backgroundColor: '#f9f9f9', transition: 'background-color 0.3s ease', cursor: 'pointer', fontSize: '0.9em', marginRight: '10px' }}>Create</button>
+                                                  <button onClick={() => setShowAddPatientRow(false)} style={{ padding: '8px', border: '1px solid #ccc', borderRadius: '5px', backgroundColor: '#f9f9f9', transition: 'background-color 0.3s ease', cursor: 'pointer', fontSize: '0.9em' }}>Cancel</button>
+                                              </td>
+                                          </tr>
+                                      )}
+                                      {adminPatients.map(patient => (
+                                          <tr key={patient.PatientID}>
+                                              {editingPatient?.PatientID === patient.PatientID ? (
+                                                  // Inline Edit Row
+                                                  <>
+                                                      <td style={{ border: '1px solid #ddd', padding: '8px' }}>{patient.PatientID}</td>
+                                                      <td style={{ border: '1px solid #ddd', padding: '8px' }}>
+                                                          <input
+                                                              type="text"
+                                                              name="Name"
+                                                              value={patientFormData.Name || ''}
+                                                              onChange={handlePatientFormChange}
+                                                              style={{ width: '100%', padding: '5px' }}
+                                                          />
+                                                      </td>
+                                                      <td style={{ border: '1px solid #ddd', padding: '8px' }}>
+                                                          <input
+                                                              type="date"
+                                                              name="DOB"
+                                                              value={patientFormData.DOB || ''}
+                                                              onChange={handlePatientFormChange}
+                                                              style={{ width: '100%', padding: '5px' }}
+                                                          />
+                                                      </td>
+                                                      <td style={{ border: '1px solid #ddd', padding: '8px' }}>
+                                                          <select
+                                                              name="Gender"
+                                                              value={patientFormData.Gender || ''}
+                                                              onChange={handlePatientFormChange}
+                                                              style={{ width: '100%', padding: '5px' }}
+                                                          >
+                                                              <option value="">Select Gender</option>
+                                                              <option value="Male">Male</option>
+                                                              <option value="Female">Female</option>
+                                                              <option value="Other">Other</option>
+                                                          </select>
+                                                      </td>
+                                                      <td style={{ border: '1px solid #ddd', padding: '8px' }}>
+                                                          <input
+                                                              type="text"
+                                                              name="Contact"
+                                                              value={patientFormData.Contact || ''}
+                                                              onChange={handlePatientFormChange}
+                                                              style={{ width: '100%', padding: '5px' }}
+                                                          />
+                                                      </td>
+                                                      <td style={{ border: '1px solid #ddd', padding: '8px' }}>
+                                                          <button onClick={updatePatient} style={{ padding: '8px', border: '1px solid #ccc', borderRadius: '5px', backgroundColor: '#f9f9f9', transition: 'background-color 0.3s ease', cursor: 'pointer', fontSize: '0.9em', marginRight: '10px' }}>Save</button>
+                                                          <button onClick={() => setEditingPatient(null)} style={{ padding: '8px', border: '1px solid #ccc', borderRadius: '5px', backgroundColor: '#f9f9f9', transition: 'background-color 0.3s ease', cursor: 'pointer', fontSize: '0.9em' }}>Cancel</button>
+                                                      </td>
+                                                  </>
+                                              ) : (
+                                                  // Display Row
+                                                  <>
+                                                      <td style={{ border: '1px solid #ddd', padding: '8px' }}>{patient.PatientID}</td>
+                                                      <td style={{ border: '1px solid #ddd', padding: '8px' }}>{patient.Name}</td>
+                                                      <td style={{ border: '1px solid #ddd', padding: '8px' }}>{patient.DOB}</td>
+                                                      <td style={{ border: '1px solid #ddd', padding: '8px' }}>{patient.Gender}</td>
+                                                      <td style={{ border: '1px solid #ddd', padding: '8px' }}>{patient.Contact}</td>
+                                                      <td style={{ border: '1px solid #ddd', padding: '8px' }}>
+                                                          <button onClick={() => { setEditingPatient(patient); setPatientFormData(patient); }} style={{ marginRight: '5px' }}>Edit</button>
+                                                          <button onClick={() => { if (window.confirm(`Are you sure you want to delete patient ${patient.Name} (ID: ${patient.PatientID})?`)) deletePatient(patient.PatientID); }}>Delete</button>
+                                                      </td>
+                                                  </>
+                                              )}
+                                          </tr>
+                                      ))}
+                                  </tbody>
+                              </table>
+                          ) : (
+                              <p>No patients found.</p>
+                          )}
                      </div>
                  );
              case 'manage_appointments':
@@ -1179,23 +1376,21 @@ const App: React.FC = () => {
                               <table style={{ borderCollapse: 'collapse', width: '100%', backgroundColor: '#fff' }}>
                                  <thead>
                                      <tr>
-                                         <th style={{ border: '1px solid #ddd', padding: '8px' }}>Record ID</th>
                                          <th style={{ border: '1px solid #ddd', padding: '8px' }}>Appointment ID</th>
+                                         <th style={{ border: '1px solid #ddd', padding: '8px' }}>Doctor</th>
                                          <th style={{ border: '1px solid #ddd', padding: '8px' }}>Diagnosis</th>
                                          <th style={{ border: '1px solid #ddd', padding: '8px' }}>Treatment</th>
                                          <th style={{ border: '1px solid #ddd', padding: '8px' }}>Notes</th>
-                                         <th style={{ border: '1px solid #ddd', padding: '8px' }}>Record Date</th>
                                      </tr>
                                  </thead>
                                  <tbody>
                                      {adminMedicalRecords.map(record => (
                                          <tr key={record.RecordID}>
-                                             <td style={{ border: '1px solid #ddd', padding: '8px' }}>{record.RecordID}</td>
                                              <td style={{ border: '1px solid #ddd', padding: '8px' }}>{record.AppointmentID}</td>
+                                             <td style={{ border: '1px solid #ddd', padding: '8px' }}>{record.DoctorName || 'N/A'}</td> {/* Display Doctor Name */}
                                              <td style={{ border: '1px solid #ddd', padding: '8px' }}>{record.Diagnosis}</td>
                                              <td style={{ border: '1px solid #ddd', padding: '8px' }}>{record.Treatment}</td>
                                              <td style={{ border: '1px solid #ddd', padding: '8px' }}>{record.Notes}</td>
-                                             <td style={{ border: '1px solid #ddd', padding: '8px' }}>{record.RecordDate}</td>
                                          </tr>
                                      ))}
                                  </tbody>
@@ -1447,8 +1642,10 @@ const App: React.FC = () => {
                                                           </select>
                                                       </td>
                                                        <td style={{ border: '1px solid #ddd', padding: '8px' }}> {/* Action buttons */}
+                                                       <button onClick={() => { if (window.confirm(`Are you sure you want to delete appointment (ID: ${appointment.AppointmentID})?`)) deleteAppointment(appointment.AppointmentID); }} style={{ padding: '8px', border: '1px solid #ccc', borderRadius: '5px', backgroundColor: '#f9f9f9', transition: 'background-color 0.3s ease', cursor: 'pointer', fontSize: '0.9em', marginLeft: '5px' }}>Delete</button>
                                                            <button onClick={() => updateDoctorAppointment()} style={{ padding: '8px', border: '1px solid #ccc', borderRadius: '5px', backgroundColor: '#f9f9f9', transition: 'background-color 0.3s ease', cursor: 'pointer', fontSize: '0.9em', marginRight: '5px' }}>Confirm</button>
                                                            <button onClick={() => setEditingAppointmentId(null)} style={{ padding: '8px', border: '1px solid #ccc', borderRadius: '5px', backgroundColor: '#f9f9f9', transition: 'background-color 0.3s ease', cursor: 'pointer', fontSize: '0.9em' }}>Cancel</button>
+
                                                        </td>
                                                   </>
                                               ) : (
@@ -1459,7 +1656,9 @@ const App: React.FC = () => {
                                                       <td style={{ border: '1px solid #ddd', padding: '8px' }}>{appointment.DateTime}</td>
                                                       <td style={{ border: '1px solid #ddd', padding: '8px' }}>{appointment.Status}</td>
                                                        <td style={{ border: '1px solid #ddd', padding: '8px' }}> {/* Action button */}
+                                                           
                                                            <button onClick={() => { setEditingAppointmentId(appointment.AppointmentID); setEditAppointmentFormData({ appointment_id: String(appointment.AppointmentID), patient_id: String(appointment.PatientID), datetime_str: appointment.DateTime, status: appointment.Status }); }} style={{ padding: '8px', border: '1px solid #ccc', borderRadius: '5px', backgroundColor: '#f9f9f9', transition: 'background-color 0.3s ease', cursor: 'pointer', fontSize: '0.9em' }}>Edit</button>
+                                                           <button onClick={() => { if (window.confirm(`Are you sure you want to delete appointment (ID: ${appointment.AppointmentID})?`)) deleteAppointment(appointment.AppointmentID); }} style={{ padding: '8px', border: '1px solid #ccc', borderRadius: '5px', backgroundColor: '#f9f9f9', transition: 'background-color 0.3s ease', cursor: 'pointer', fontSize: '0.9em', marginLeft: '5px' }}>Delete</button>
                                                        </td>
                                                   </>
                                               )}
@@ -1678,7 +1877,8 @@ const App: React.FC = () => {
                                                     <td style={{ border: '1px solid #ddd', padding: '8px' }}>{record.Treatment}</td>
                                                     <td style={{ border: '1px solid #ddd', padding: '8px' }}>{record.Notes}</td>
                                                      <td style={{ border: '1px solid #ddd', padding: '8px' }}> {/* Action button */}
-                                                         <button onClick={() => { setEditingMedicalRecordId(record.RecordID); setEditMedicalRecordFormData(record); }} style={{ padding: '8px', border: '1px solid #ccc', borderRadius: '5px', backgroundColor: '#f9f9f9', transition: 'background-color 0.3s ease', cursor: 'pointer', fontSize: '0.9em' }}>Edit</button>
+                                                         <button onClick={() => { setEditingMedicalRecordId(record.RecordID); setEditMedicalRecordFormData(record); }} style={{ padding: '8px', border: '1px solid #ccc', borderRadius: '5px', backgroundColor: '#f9f9f9', transition: 'background-color 0.3s ease', cursor: 'pointer', fontSize: '0.9em', marginRight: '5px' }}>Edit</button>
+                                                         <button onClick={() => { if (window.confirm(`Are you sure you want to delete this medical record (ID: ${record.RecordID})?`)) deleteMedicalRecord(record.RecordID); }} style={{ padding: '8px', border: '1px solid #ccc', borderRadius: '5px', backgroundColor: '#f9f9f9', transition: 'background-color 0.3s ease', cursor: 'pointer', fontSize: '0.9em' }}>Delete</button>
                                                      </td>
                                                 </>
                                             )}
@@ -1898,7 +2098,7 @@ const App: React.FC = () => {
                                  <thead>
                                      <tr>
                                          <th style={{ border: '1px solid #ddd', padding: '8px' }}>Appointment ID</th>
-                                         <th style={{ border: '1px solid #ddd', padding: '8px' }}>Doctor ID</th>
+                                         <th style={{ border: '1px solid #ddd', padding: '8px' }}>Doctor</th>
                                          <th style={{ border: '1px solid #ddd', padding: '8px' }}>Date/Time</th>
                                          <th style={{ border: '1px solid #ddd', padding: '8px' }}>Status</th>
                                      </tr>
@@ -1907,7 +2107,7 @@ const App: React.FC = () => {
                                      {patientAppointments.map(appointment => (
                                          <tr key={appointment.AppointmentID}>
                                              <td style={{ border: '1px solid #ddd', padding: '8px' }}>{appointment.AppointmentID}</td>
-                                             <td style={{ border: '1px solid #ddd', padding: '8px' }}>{appointment.DoctorID}</td>
+                                             <td style={{ border: '1px solid #ddd', padding: '8px' }}>{appointment.DoctorName || 'N/A'}</td>
                                              <td style={{ border: '1px solid #ddd', padding: '8px' }}>{appointment.DateTime}</td>
                                              <td style={{ border: '1px solid #ddd', padding: '8px' }}>{appointment.Status}</td>
                                          </tr>
@@ -1928,25 +2128,29 @@ const App: React.FC = () => {
                              <table style={{ borderCollapse: 'collapse', width: '100%', backgroundColor: '#ffffff' }}>
                                  <thead>
                                      <tr>
-                                         <th style={{ border: '1px solid #ddd', padding: '8px' }}>Record ID</th>
                                          <th style={{ border: '1px solid #ddd', padding: '8px' }}>Appointment ID</th>
+                                         <th style={{ border: '1px solid #ddd', padding: '8px' }}>Doctor</th>
                                          <th style={{ border: '1px solid #ddd', padding: '8px' }}>Diagnosis</th>
                                          <th style={{ border: '1px solid #ddd', padding: '8px' }}>Treatment</th>
                                          <th style={{ border: '1px solid #ddd', padding: '8px' }}>Notes</th>
-                                         <th style={{ border: '1px solid #ddd', padding: '8px' }}>Date</th>
                                      </tr>
                                  </thead>
                                  <tbody>
-                                     {patientMedicalRecords.map(record => (
-                                         <tr key={record.RecordID}>
-                                             <td style={{ border: '1px solid #ddd', padding: '8px' }}>{record.RecordID}</td>
-                                             <td style={{ border: '1px solid #ddd', padding: '8px' }}>{record.AppointmentID}</td>
-                                             <td style={{ border: '1px solid #ddd', padding: '8px' }}>{record.Diagnosis}</td>
-                                             <td style={{ border: '1px solid #ddd', padding: '8px' }}>{record.Treatment}</td>
-                                             <td style={{ border: '1px solid #ddd', padding: '8px' }}>{record.Notes}</td>
-                                             <td style={{ border: '1px solid #ddd', padding: '8px' }}>{record.RecordDate}</td>
+                                     {patientMedicalRecords.length > 0 ? ( // Add check for length > 0
+                                         patientMedicalRecords.map(record => (
+                                             <tr key={record.RecordID}>
+                                                 <td style={{ border: '1px solid #ddd', padding: '8px' }}>{record.AppointmentID}</td>
+                                                 <td style={{ border: '1px solid #ddd', padding: '8px' }}>{record.DoctorName || 'N/A'}</td>
+                                                 <td style={{ border: '1px solid #ddd', padding: '8px' }}>{record.Diagnosis}</td>
+                                                 <td style={{ border: '1px solid #ddd', padding: '8px' }}>{record.Treatment}</td>
+                                                 <td style={{ border: '1px solid #ddd', padding: '8px' }}>{record.Notes}</td>
+                                             </tr>
+                                         ))
+                                     ) : (
+                                         <tr>
+                                             <td colSpan={5}>No medical records found.</td>
                                          </tr>
-                                     ))}
+                                     )}
                                  </tbody>
                              </table>
                          ) : (
@@ -2020,6 +2224,15 @@ const App: React.FC = () => {
             ...doctorFormData,
             [e.target.name]: e.target.value
         });
+        // If DepartmentID is changed, find the department name and set it as specialization
+        if (e.target.name === 'DepartmentID') {
+            const selectedDeptId = parseInt(e.target.value);
+            const selectedDepartment = adminDepartments.find(dept => dept.DepartmentID === selectedDeptId);
+            setDoctorFormData(prevData => ({
+                ...prevData,
+                Specialization: selectedDepartment ? selectedDepartment.Name : ''
+            }));
+        }
     };
 
     const createDoctor = async () => {
@@ -2036,17 +2249,16 @@ const App: React.FC = () => {
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                     name: doctorFormData.Name,
-                    specialization: '', // Specialization derived from Department ID on backend
-                    department_id: doctorFormData.DepartmentID
+                    specialization: doctorFormData.Specialization, // Send derived specialization from frontend
+                    department_id: parseInt(doctorFormData.DepartmentID as any) // Ensure DepartmentID is integer
                 })
             });
             const data = await response.json();
             if (response.ok) {
                 setDoctorFormMessage(data.message || 'Doctor created successfully!');
                 fetchAdminDoctors(); // Refresh list
-                setShowDoctorForm(false); // Hide form
+                setShowAddDoctorRow(false); // Hide inline form
                 setDoctorFormData({}); // Clear form
-                setEditingDoctor(null);
             } else {
                 setDoctorFormMessage(data.error || 'Failed to create doctor');
                 setAdminError(data.error || 'Failed to create doctor');
@@ -2075,8 +2287,8 @@ const App: React.FC = () => {
                 body: JSON.stringify({
                     doctor_id: editingDoctor.DoctorID,
                     new_name: doctorFormData.Name,
-                    new_spec: '', // Specialization derived from Department ID on backend
-                    new_dept: doctorFormData.DepartmentID
+                    new_specialization: doctorFormData.Specialization, // Send derived specialization with correct parameter name
+                    new_department_id: parseInt(doctorFormData.DepartmentID as any) // Send DepartmentID with correct parameter name
                 })
             });
             const data = await response.json();
@@ -2121,6 +2333,146 @@ const App: React.FC = () => {
              setAdminError(error.message || 'An error occurred while deleting doctor');
         } finally {
             setLoadingAdminData(false);
+        }
+    };
+
+    // Admin Patient Management handlers and functions
+    const handlePatientFormChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
+        setPatientFormData({
+            ...patientFormData,
+            [e.target.name]: e.target.value
+        });
+    };
+
+    const createPatient = async () => {
+        if (!patientFormData.Name || !patientFormData.Contact) {
+            setPatientFormMessage('Name and Contact are required.');
+            return;
+        }
+        setLoadingAdminData(true);
+        setAdminError(null);
+        setPatientFormMessage(null);
+        try {
+            const response = await fetch('http://localhost:5000/admin/patient', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    name: patientFormData.Name,
+                    contact: patientFormData.Contact
+                })
+            });
+            const data = await response.json();
+            if (response.ok) {
+                setPatientFormMessage(data.message || 'Patient created successfully!');
+                fetchAdminPatients(); // Refresh list
+                setShowAddPatientRow(false); // Hide inline form
+                setPatientFormData({}); // Clear form
+            } else {
+                setPatientFormMessage(data.error || 'Failed to create patient');
+                setAdminError(data.error || 'Failed to create patient');
+            }
+        } catch (error: any) {
+            setPatientFormMessage(error.message || 'An error occurred while creating patient');
+            setAdminError(error.message || 'An error occurred while creating patient');
+        } finally {
+            setLoadingAdminData(false);
+        }
+    };
+
+    const updatePatient = async () => {
+        if (!editingPatient?.PatientID || !patientFormData.Name || !patientFormData.Contact) {
+            setPatientFormMessage('Patient ID, Name, and Contact are required for update.');
+            return;
+        }
+         setLoadingAdminData(true);
+         setAdminError(null);
+         setPatientFormMessage(null);
+        try {
+            // Assuming PUT endpoint for admin patient update exists
+            const response = await fetch('http://localhost:5000/admin/patient', { // Adjust endpoint if different
+                method: 'PUT', // Assuming PUT for update
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    patient_id: editingPatient.PatientID,
+                    new_name: patientFormData.Name,
+                    new_contact: patientFormData.Contact // Send updated contact with correct parameter name
+                })
+            });
+            const data = await response.json();
+            if (response.ok) {
+                setPatientFormMessage(data.message || 'Patient updated successfully!');
+                fetchAdminPatients(); // Refresh list
+                setShowAddPatientRow(false); // Hide form
+                setPatientFormData({}); // Clear form
+                setEditingPatient(null);
+            } else {
+                setPatientFormMessage(data.error || 'Failed to update patient');
+                setAdminError(data.error || 'Failed to update patient');
+            }
+        } catch (error: any) {
+            setPatientFormMessage(error.message || 'An error occurred while updating patient');
+            setAdminError(error.message || 'An error occurred while updating patient');
+        } finally {
+            setLoadingAdminData(false);
+        }
+    };
+
+    const deletePatient = async (patient_id: number) => {
+         setLoadingAdminData(true);
+         setAdminError(null);
+         setPatientFormMessage(null);
+        try {
+            const response = await fetch('http://localhost:5000/admin/patient', {
+                method: 'DELETE',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ patient_id: patient_id })
+            });
+            const data = await response.json();
+            if (response.ok) {
+                setPatientFormMessage(data.message || 'Patient deleted successfully!');
+                fetchAdminPatients(); // Refresh list
+            } else {
+                setPatientFormMessage(data.error || 'Failed to delete patient');
+                setAdminError(data.error || 'Failed to delete patient');
+            }
+        } catch (error: any) {
+             setPatientFormMessage(error.message || 'An error occurred while deleting patient');
+             setAdminError(error.message || 'An error occurred while deleting patient');
+        } finally {
+            setLoadingAdminData(false);
+        }
+    };
+
+    const deleteMedicalRecord = async (recordId: number) => {
+        setLoadingDoctorData(true);
+        setDoctorError(null);
+        setEditMedicalRecordMessage(null); // Using this for general messages too
+
+        if (!doctorId) {
+            setEditMedicalRecordMessage('Doctor ID not available.');
+            setLoadingDoctorData(false);
+            return;
+        }
+
+        try {
+            const response = await fetch('http://localhost:5000/doctor/medical_record', {
+                method: 'DELETE',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ record_id: recordId })
+            });
+            const data = await response.json();
+            if (response.ok) {
+                setEditMedicalRecordMessage(data.message || 'Medical record deleted successfully!');
+                fetchDoctorMedicalRecords(); // Refresh the list
+            } else {
+                setEditMedicalRecordMessage(data.error || 'Failed to delete medical record');
+                setDoctorError(data.error || 'Failed to delete medical record');
+            }
+        } catch (error: any) {
+            setEditMedicalRecordMessage(error.message || 'An error occurred while deleting medical record');
+            setDoctorError(error.message || 'An error occurred while deleting medical record');
+        } finally {
+            setLoadingDoctorData(false);
         }
     };
 
@@ -2423,7 +2775,7 @@ const App: React.FC = () => {
                                          borderRadius: '5px',
                                          backgroundColor: adminActiveMenuItem === 'manage_doctors' ? '#e0e0e0' : '#f9f9f9',
                                          transition: 'background-color 0.3s ease'
-                                     }} onClick={() => setAdminActiveMenuItem('manage_doctors')}>Manage Doctors</li>
+                                     }} onClick={() => { setAdminActiveMenuItem('manage_doctors'); fetchAdminDoctors(); fetchAdminDepartments(); }}>Manage Doctors</li>
                                       <li style={{
                                           marginBottom: '10px',
                                           cursor: 'pointer',

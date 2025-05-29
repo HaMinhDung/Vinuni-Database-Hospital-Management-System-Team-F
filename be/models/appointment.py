@@ -61,7 +61,7 @@ def get_appointment(appointment_id):
 def get_appointments_by_patient(patient_id):
     conn = get_connection()
     cursor = conn.cursor(dictionary=True)
-    sql = "SELECT * FROM Appointment WHERE PatientID = %s"
+    sql = "SELECT A.*, D.Name AS DoctorName FROM Appointment A JOIN Doctor D ON A.DoctorID = D.DoctorID WHERE A.PatientID = %s"
     cursor.execute(sql, (patient_id,))
     appointments = cursor.fetchall()
     cursor.close()
