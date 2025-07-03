@@ -1,6 +1,6 @@
 # Hospital Management System Project
 
-![Hospital Logo](skibidi.png)
+![Hospital Logo](assets/skibidi.png)
 
 ## 1. Project Overview
 
@@ -31,7 +31,7 @@ This project presents a comprehensive **Hospital Management System** designed an
 - **Authentication & Authorization**: Secure role-based access system.
 - **Search & Filtering**: Dynamic filters and full search across records.
 
-![Doctor Logo](skibidi_doctor.png)
+![Doctor Logo](assets/skibidi_doctor.png)
 
 ### 2.2. Non-functional Requirements
 
@@ -40,7 +40,7 @@ This project presents a comprehensive **Hospital Management System** designed an
 - **Usability**: Intuitive UI, role-based dashboards.
 - **Reliability**: Strong schema design with constraints and normalization.
 
-![Patient Logo](skibidi_patient.png)
+![Patient Logo](assets/skibidi_patient.png)
 
 ---
 
@@ -93,6 +93,7 @@ JOIN MedicalRecord m ON a.AppointmentID = m.AppointmentID;
   ```python
   sql = "SELECT COUNT(*) FROM User WHERE Username = %s"
   cursor.execute(sql, (username,))
+  ```
 
 ## 6. System Architecture
 
@@ -116,14 +117,31 @@ JOIN MedicalRecord m ON a.AppointmentID = m.AppointmentID;
     - React + TypeScript components
     - Separate pages for Login, Dashboard, Entity Management
 
+### 6.3. Repository Organization
+
+The repository is organized into the following directories:
+
+- **`/sql`**: Contains all SQL scripts
+  - `/sql/procedures`: Stored procedures for common operations
+  - `/sql/triggers`: Database triggers for automated actions
+  - `/sql/queries`: SQL queries for analytics and reporting
+  - `/sql/analytics`: SQL queries specifically for analytics
+- **`/be`**: Backend code (Python/Flask)
+- **`/fe`**: Frontend code (TypeScript/React)
+- **`/analytics`**: Analytics and visualization scripts
+  - `/analytics/scripts`: Python scripts for generating analytics
+  - `/analytics/visuals`: Generated charts, reports and data
+- **`/docs`**: Documentation files
+- **`/assets`**: Images and other static assets
+
 ## 7. Usage Instructions
 
 ### 7.1. Database Setup
 
 1. Open MySQL server
 2. Import the SQL files:
-   - `Create_Database.sql`
-   - `Insert_Database.sql`
+   - `sql/Create_Database.sql`
+   - `sql/Insert_Database.sql`
 
 ### 7.2. Backend Setup
 
@@ -142,7 +160,7 @@ npm start
 ## 8. Testing & Validation
 - Over **70 test cases** implemented
 - **Highlighted tests** included in the demo video
-- For full test suite: see `test_case/` folder in repository or separate Test Case file
+- For full test suite: see `docs/Full test case.csv` in repository
 
 ## 9. Project Demo
 
