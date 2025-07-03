@@ -1,59 +1,187 @@
-# 1. Hospital Management System Project
+# Hospital Management System Project
 
-## 1.1. Project Overview
+![Hospital Logo](skibidi.png)
 
-**Title:** Hospital Management System
-![Nothing Burger logo](skibidi.png)
-## 1.2. Brief Description
+## 1. Project Overview
 
-This project involves the design, development, and implementation of a comprehensive Hospital Management System. It is built as a MySQL-based information system with a web interface, focusing on managing core healthcare entities and operations. The system will provide functionalities for data management, analytics, reporting, and secure access, aiming to streamline workflows within a healthcare facility through a user-friendly platform.
+### 1.1. Description
 
-## 1.3. Functional & Non-functional Requirements
+This project presents a comprehensive **Hospital Management System** designed and implemented using **MySQL**, with a modern web interface built using **Flask (Python)** and **Node.js + TypeScript**. The system aims to optimize hospital operations including patient management, doctor scheduling, medical records, billing, and secure user access. 
 
-### 1.3.1. Functional Requirements
+### 1.2. Key Features
 
-* **Entities Management:** Implement full CRUD (Create, Read, Update, Delete) operations for core entities such as Patients, Doctors, Appointments, Medical Records, Departments, and Services.
-* **Appointment Scheduling:** Allow users to schedule, view, modify, and manage patient appointments with doctors.
-* **Medical Records Management:** Enable structured storage, retrieval, and update of patient medical history, including diagnoses, treatments, prescriptions, and test results.
-* **Reporting and Analytics:** Provide capabilities to generate statistical reports and visualize key performance indicators (e.g., appointment statistics by doctor or department, common diagnoses, service usage) utilizing SQL aggregations, grouping, and database views.
-* **User Authentication and Authorization:** Implement a secure system for user login across different roles (e.g., Admin, Doctor, Patient, Staff) with role-based access control to restrict access to specific functionalities and data.
-* **Search and Filtering:** Offer robust search and filtering capabilities across various entities and data fields to quickly locate information.
-![Doctor logo](skibidi_doctor.png)
-### 1.3.2. Non-functional Requirements
-
-* **Security:** Ensure data security and privacy through appropriate database-level security configurations, user privilege management, encryption for sensitive data fields, and prevention of common web vulnerabilities like SQL injection.
-* **Performance:** Optimize database queries and structure (e.g., using indexing, appropriate data types) to ensure efficient data retrieval and transaction processing, maintaining system responsiveness.
-* **Usability:** Develop an intuitive, consistent, and user-friendly web interface that is accessible and easy to navigate for all intended user roles.
-* **Reliability:** Design the database schema with appropriate constraints (Primary Keys, Foreign Keys, Check Constraints) to maintain data integrity and consistency across the system.
-![Patient logo](skibidi_patient.png)
-## 1.4. Planned Core Entities (brief outline)
-
-* `Patients`: Stores demographic and contact information for patients.
-* `Doctors`: Stores professional and contact details for doctors, including specialization and department.
-* `Appointments`: Records details of scheduled visits, linking patients, doctors, dates, times, and status.
-* `MedicalRecords`: Contains patient medical history, linking to specific encounters, diagnoses, treatments, and notes.
-* `Users`: Manages user accounts for system access, including roles and credentials.
-* `Departments`: Lists the various departments within the hospital.
-* `Services`: Defines the medical services provided, potentially including costs.
-
-## 1.5. Tech Stack
-
-* **Database:** MySQL
-* **Backend:** Python
-* **Frontend:** Typescript (with HTML, CSS, and JavaScript)
-
-## 1.6. Team Members and Roles
-
-* **Ha Minh Dung:** Backend Developer
-* **Nguyen Duc Trung:** Database Developer
-* **Tran Hung Dat:** Frontend Developer
-
-
-## 1.7. Timeline
-
-* **By Tuesday, May 6:** Start initial requirements analysis.
-* **By Tuesday, May 13:** Continue requirements analysis and begin Conceptual & Logical Design (ERD draft, initial entity definition). 
-* **By Tuesday, May 20:** Complete Conceptual & Logical Design (Finalized ERD, Normalized Schema). Prepare SQL DDL scripts. Define detailed task division.
-* **By Tuesday, May 27:** Physical Implementation (Create DB, Load sample data, Develop stored procedures, triggers, views, indexing). Develop Backend and Frontend, integrate layers. Implement security. Conduct End-to-End Testing and Performance Testing. Prepare final presentation slides and report.
+- Role-based login for Admin, Doctor, and Patient
+- Full CRUD operations for core entities
+- Secure appointment scheduling
+- Medical record tracking
+- Data analytics & reporting via SQL views
+- Encrypted password management
+- Responsive frontend dashboard
 
 ---
+
+## 2. Functional & Non-functional Requirements
+
+### 2.1. Functional Requirements
+
+- **Entities Management**: Full CRUD for Patients, Doctors, Appointments, Medical Records, Departments, and Services.
+- **Appointment Scheduling**: Manage doctor-patient appointments.
+- **Medical Records Management**: Record diagnoses, treatments, prescriptions, test results.
+- **Reporting & Analytics**: Generate SQL-based statistics and performance metrics.
+- **Authentication & Authorization**: Secure role-based access system.
+- **Search & Filtering**: Dynamic filters and full search across records.
+
+![Doctor Logo](skibidi_doctor.png)
+
+### 2.2. Non-functional Requirements
+
+- **Security**: Role-based access control, hashed passwords, parameterized queries.
+- **Performance**: Optimized queries, indexing, caching with Flask-Caching.
+- **Usability**: Intuitive UI, role-based dashboards.
+- **Reliability**: Strong schema design with constraints and normalization.
+
+![Patient Logo](skibidi_patient.png)
+
+---
+
+## 3. System Schema Overview
+
+### 3.1. Core Entities
+
+- `Patients`: Demographics & contact info.
+- `Doctors`: Credentials, specialization, department.
+- `Appointments`: Schedules & status.
+- `MedicalRecords`: Diagnosis & treatment info.
+- `Users`: Login accounts, role-based access.
+- `Departments`: Department list.
+- `Services`: Medical services & costs.
+- `UserProfiles`: Extended user details.
+
+### 3.2. Views Created
+
+- **DoctorAppointments**: Number of appointments per doctor.
+- **PatientMedicalHistory**: History of diagnoses and treatments for each patient.
+
+```sql
+CREATE VIEW DoctorAppointments AS
+SELECT d.Name AS DoctorName, COUNT(a.AppointmentID) AS TotalAppointments
+FROM Doctor d
+JOIN Appointment a ON d.DoctorID = a.DoctorID
+GROUP BY d.DoctorID;
+
+CREATE VIEW PatientMedicalHistory AS
+SELECT p.Name AS PatientName, a.DateTime, m.Diagnosis, m.Treatment
+FROM Patient p
+JOIN Appointment a ON p.PatientID = a.PatientID
+JOIN MedicalRecord m ON a.AppointmentID = m.AppointmentID;
+```
+
+## 4. Performance Optimizations
+
+- **Indexes**: Added on `patient_id`, `doctor_id`, and `appointment_date`.
+- **Caching**: Used `Flask-Caching` to speed up high-traffic endpoints.
+- **Role-specific API Logic**: Reduces branching and simplifies endpoint design.
+
+## 5. Security Configuration
+
+- **Role-based Privileges**:
+  - **Doctor**: Access to their own appointments and medical records.
+  - **Patient**: Access to their own data and appointments.
+  - **Admin**: Full system access, user creation, and data visibility.
+
+- **Parameterized Queries**:
+  ```python
+  sql = "SELECT COUNT(*) FROM User WHERE Username = %s"
+  cursor.execute(sql, (username,))
+
+## 6. System Architecture
+
+### 6.1. Tech Stack
+
+- **Database**: MySQL
+- **Backend**: Python (Flask)
+- **Frontend**: Node.js + TypeScript (React)
+- **Connector**: mysql-connector-python
+- **Caching**: Flask-Caching
+
+### 6.2. Main Structure
+
+- **Three-layer architecture**:
+  - **Database Layer**: Raw SQL scripts for schema creation and test data.
+  - **Backend (`/be`)**:
+    - `server.py`: Main API entrypoint
+    - `db/connection.py`: MySQL connector configuration
+    - `models/`: Business logic for each entity
+  - **Frontend (`/fe/src`)**:
+    - React + TypeScript components
+    - Separate pages for Login, Dashboard, Entity Management
+
+## 7. Usage Instructions
+
+### 7.1. Database Setup
+
+1. Open MySQL server
+2. Import the SQL files:
+   - `Create_Database.sql`
+   - `Insert_Database.sql`
+
+### 7.2. Backend Setup
+
+```bash
+cd be/
+pip install -r requirements.txt
+# Configure your MySQL credentials in db/connection.py
+python server.py
+```
+### 7.3. Frontend Setup
+```bash
+cd fe/
+npm install
+npm start
+```
+## 8. Testing & Validation
+- Over **70 test cases** implemented
+- **Highlighted tests** included in the demo video
+- For full test suite: see `test_case/` folder in repository or separate Test Case file
+
+## 9. Project Demo
+
+- **Video Demo**: https://www.youtube.com/watch?v=p6534J4aPGg 
+- Demonstrates full flow for Admin, Doctor, and Patient accounts
+- Showcases:
+  - Login & role-based dashboard
+  - Search & filter
+  - CRUD operations
+
+## 10. Team Members
+
+| Name             | ID           | Role               |
+|------------------|--------------|--------------------|
+| Ha Minh Dung     | V202200791   | Backend Developer  |
+| Nguyen Duc Trung | V202200777   | Data Developer     |
+| Tran Hung Dat    | V202200889   | Frontend Developer |
+
+
+## 11. Project Timeline
+
+| Date       | Milestone                                              |
+|------------|--------------------------------------------------------|
+| May 6      | Initial requirement analysis                           |
+| May 13     | ERD draft, schema planning                             |
+| May 20     | Finalized ERD, DDL scripts, task assignments           |
+| May 27     | Completed implementation, testing, report & demo prep  |
+
+## 12. Key Learnings & Challenges
+
+- Schema design and normalization in real-world healthcare apps
+- Integration between Flask backend and React frontend
+- Implementing secure authentication and role separation
+- Performance tuning with views, indexing, and caching
+- Hands-on experience with stored procedures and triggers
+- Managing edge cases and user-specific access logic
+
+## 13. Conclusion
+This project demonstrates the successful design and development of a full-stack, database-driven **Hospital Management System**. It combines strong backend logic, secure database design, and a responsive frontend to provide an effective solution for real-world hospital workflows.
+
+
+
