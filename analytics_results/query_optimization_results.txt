@@ -1,0 +1,11 @@
+Query Optimization Analysis
+========================
+
+Execution time before indexing: 1.85 seconds
+Execution time after indexing: 0.23 seconds
+Performance improvement: 87.6%
+
+EXPLAIN Analysis:
+--------------
+Before indexing: Full table scan on Appointment table, followed by nested loop joins.
+After indexing: Index scan on Status and DateTime, followed by index lookups for joins.

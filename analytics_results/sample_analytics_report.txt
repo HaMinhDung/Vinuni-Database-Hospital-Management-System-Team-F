@@ -1,0 +1,12 @@
+Hospital Management System - Sample Analytics Report
+==============================================
+
+Report Generated: 2025-07-03 12:52:09
+
+This report contains sample analytics visualizations for the hospital management system.
+These are based on simulated data to demonstrate SQL analytical functions like RANK() and GROUP BY MONTH().
+
+Files included in this report:
+- doctor_ranking_chart.png: Visualization of doctor rankings using RANK() function
+- monthly_trends_chart.png: Visualization of monthly appointment trends using GROUP BY MONTH()
+- query_optimization_chart.png: Comparison of query performance before and after indexing

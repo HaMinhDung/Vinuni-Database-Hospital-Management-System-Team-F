@@ -1,0 +1,13 @@
+Year,Month,MonthName,TotalAppointments,UniquePatients,CompletionRate,YearMonth
+2023,1,January,45,38,85.5,2023-1
+2023,2,February,52,43,86.2,2023-2
+2023,3,March,61,50,84.9,2023-3
+2023,4,April,67,57,88.1,2023-4
+2023,5,May,75,62,90.3,2023-5
+2023,6,June,80,65,91.5,2023-6
+2023,7,July,85,70,92.0,2023-7
+2023,8,August,91,76,93.7,2023-8
+2023,9,September,87,72,90.8,2023-9
+2023,10,October,76,65,89.2,2023-10
+2023,11,November,65,54,87.6,2023-11
+2023,12,December,72,60,88.9,2023-12
