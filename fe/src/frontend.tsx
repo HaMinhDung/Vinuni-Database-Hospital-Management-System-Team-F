@@ -592,6 +592,7 @@ const App: React.FC = () => {
                  setEditAppointmentFormData({ appointment_id: '', patient_id: '', datetime_str: '', status: '' });
                  fetchDoctorAppointments(); // Refresh appointments list
                  setDoctorActiveMenuItem('appointments'); // Go back to appointments list
+                 setEditingAppointmentId(null); // Hide the edit form
             } else {
                  setEditAppointmentMessage(data.error || 'Failed to update appointment');
                  setDoctorError(data.error || 'Failed to update appointment');
@@ -695,9 +696,11 @@ const App: React.FC = () => {
         const updateData: any = { record_id: editingMedicalRecordId };
         // Note: AppointmentID, RecordDate are generally not editable.
         // We will only include Diagnosis, Treatment, and Notes if they are present in the form data.
-        if (editMedicalRecordFormData.Diagnosis !== undefined) updateData.diagnosis = editMedicalRecordFormData.Diagnosis;
-        if (editMedicalRecordFormData.Treatment !== undefined) updateData.treatment = editMedicalRecordFormData.Treatment;
-        if (editMedicalRecordFormData.Notes !== undefined) updateData.notes = editMedicalRecordFormData.Notes;
+        if (editMedicalRecordFormData.Diagnosis !== undefined && editMedicalRecordFormData.Diagnosis !== null) updateData.diagnosis = editMedicalRecordFormData.Diagnosis;
+        if (editMedicalRecordFormData.Treatment !== undefined && editMedicalRecordFormData.Treatment !== null) updateData.treatment = editMedicalRecordFormData.Treatment;
+        // Notes can be an empty string, so check specifically for undefined or null if Notes is optional
+        if (editMedicalRecordFormData.Notes !== undefined && editMedicalRecordFormData.Notes !== null) updateData.notes = editMedicalRecordFormData.Notes;
+        else if (editMedicalRecordFormData.Notes === '') updateData.notes = ''; // Allow sending empty notes
 
         // Only proceed if there are changes other than the record_id
         if (Object.keys(updateData).length <= 1) {
@@ -1840,7 +1843,7 @@ const App: React.FC = () => {
                                                     <td style={{ border: '1px solid #ddd', padding: '8px' }}>
                                                         <input
                                                             type="text"
-                                                            name="diagnosis"
+                                                            name="Diagnosis"
                                                             value={editMedicalRecordFormData.Diagnosis || ''}
                                                             onChange={handleEditMedicalRecordFormChange}
                                                             style={{ width: '100%', padding: '5px' }}
@@ -1849,7 +1852,7 @@ const App: React.FC = () => {
                                                     <td style={{ border: '1px solid #ddd', padding: '8px' }}>
                                                         <input
                                                             type="text"
-                                                            name="treatment"
+                                                            name="Treatment"
                                                             value={editMedicalRecordFormData.Treatment || ''}
                                                             onChange={handleEditMedicalRecordFormChange}
                                                             style={{ width: '100%', padding: '5px' }}
@@ -1857,7 +1860,7 @@ const App: React.FC = () => {
                                                     </td>
                                                     <td style={{ border: '1px solid #ddd', padding: '8px' }}>
                                                          <textarea
-                                                            name="notes"
+                                                            name="Notes"
                                                             value={editMedicalRecordFormData.Notes || ''}
                                                             onChange={handleEditMedicalRecordFormChange as any}
                                                             style={{ width: '100%', padding: '5px' }}

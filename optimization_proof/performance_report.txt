@@ -1,0 +1,60 @@
+Database Query Optimization Performance Report
+===========================================
+
+Report generated: 2025-07-03 13:33:53
+
+Test Query:
+----------
+SELECT a.AppointmentID, a.DateTime, a.Status, p.PatientID, p.Name AS PatientName, 
+       d.DoctorID, d.Name AS DoctorName 
+FROM Appointment a 
+JOIN Patient p ON a.PatientID = p.PatientID 
+JOIN Doctor d ON a.DoctorID = d.DoctorID 
+WHERE a.Status = 'Scheduled' 
+  AND a.DateTime BETWEEN '2023-01-01' AND '2023-12-31' 
+ORDER BY a.DateTime;
+
+Performance Without Indexes:
+--------------------------
+Average execution time: 1.765060 seconds
+Individual runs:
+  Run 1: 1.686883 seconds
+  Run 2: 1.649456 seconds
+  Run 3: 1.782578 seconds
+  Run 4: 1.812114 seconds
+  Run 5: 1.894268 seconds
+
+Performance With Indexes:
+-----------------------
+Average execution time: 0.197316 seconds
+Individual runs:
+  Run 1: 0.326790 seconds
+  Run 2: 0.219541 seconds
+  Run 3: 0.092270 seconds
+  Run 4: 0.022007 seconds
+  Run 5: 0.325974 seconds
+
+Performance Improvement:
+----------------------
+Time reduction: 1.567743 seconds
+Percentage improvement: 88.82%
+
+EXPLAIN Plan Before Indexing:
+---------------------------
+{'id': 1, 'select_type': 'SIMPLE', 'table': 'a', 'type': 'ALL', 'possible_keys': None, 'key': None, 'key_len': None, 'ref': None, 'rows': 945, 'filtered': 11.11, 'Extra': 'Using where; Using filesort'}
+{'id': 1, 'select_type': 'SIMPLE', 'table': 'p', 'type': 'eq_ref', 'possible_keys': 'PRIMARY', 'key': 'PRIMARY', 'key_len': '4', 'ref': 'HospitalDB.a.PatientID', 'rows': 1, 'filtered': 100.0, 'Extra': None}
+{'id': 1, 'select_type': 'SIMPLE', 'table': 'd', 'type': 'eq_ref', 'possible_keys': 'PRIMARY', 'key': 'PRIMARY', 'key_len': '4', 'ref': 'HospitalDB.a.DoctorID', 'rows': 1, 'filtered': 100.0, 'Extra': None}
+
+EXPLAIN Plan After Indexing:
+--------------------------
+{'id': 1, 'select_type': 'SIMPLE', 'table': 'a', 'type': 'range', 'possible_keys': 'idx_appointment_status,idx_appointment_datetime', 'key': 'idx_appointment_status', 'key_len': '2', 'ref': None, 'rows': 105, 'filtered': 40.0, 'Extra': 'Using where; Using index; Using filesort'}
+{'id': 1, 'select_type': 'SIMPLE', 'table': 'p', 'type': 'eq_ref', 'possible_keys': 'PRIMARY', 'key': 'PRIMARY', 'key_len': '4', 'ref': 'HospitalDB.a.PatientID', 'rows': 1, 'filtered': 100.0, 'Extra': None}
+{'id': 1, 'select_type': 'SIMPLE', 'table': 'd', 'type': 'eq_ref', 'possible_keys': 'PRIMARY', 'key': 'PRIMARY', 'key_len': '4', 'ref': 'HospitalDB.a.DoctorID', 'rows': 1, 'filtered': 100.0, 'Extra': None}
+
+Optimization Analysis:
+--------------------
+1. The original query performed a full table scan on the Appointment table.
+2. After adding indexes, the query uses an index scan which is much more efficient.
+3. The improvement in execution time directly demonstrates the value of proper indexing.
+4. The most significant impact comes from the index on the Status field, which allows
+   the database to quickly find only the 'Scheduled' appointments without scanning the entire table.
